@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:swipe_app/screens/welcome_screen.dart';
+import 'package:swipe_app/screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,8 +54,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const WelcomeScreen(),
+      home: const HomeScreen(),
+      routes: {'/home': (context) => const HomeScreen()},
     );
   }
 }
-
