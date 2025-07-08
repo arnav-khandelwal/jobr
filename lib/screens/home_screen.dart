@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/widgets/location_app_bar.dart';
 import 'package:swipe_app/widgets/filters_bar.dart';
-import 'package:swipe_app/widgets/job_card.dart';
+import 'package:swipe_app/widgets/detailed_job_card.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
+import 'package:swipe_app/fake_data/jobs_data.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,30 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Freelance',
   ];
 
-  final List<Map<String, String>> _jobs = [
-    {
-      'title': 'Flutter Developer',
-      'company': 'Techify',
-      'location': 'Bangalore',
-      'salary': '₹12L - ₹18L',
-      'description':
-          'Build beautiful mobile apps with Flutter. 2+ years experience required.',
-    },
-    {
-      'title': 'UI/UX Designer',
-      'company': 'DesignPro',
-      'location': 'Remote',
-      'salary': '₹8L - ₹14L',
-      'description': 'Design intuitive user interfaces for web and mobile.',
-    },
-    {
-      'title': 'Backend Engineer',
-      'company': 'CloudBase',
-      'location': 'Hyderabad',
-      'salary': '₹15L - ₹22L',
-      'description': 'Work on scalable backend systems using Node.js and AWS.',
-    },
-  ];
+  final List<Job> _jobs = availableJobs;
 
   int _currentJobIndex = 0;
 
@@ -56,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // Here you would handle the job application logic
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Applied to ${_jobs[_currentJobIndex]['title']}!'),
+        content: Text('Applied to ${_jobs[_currentJobIndex].jobTitle}!'),
         backgroundColor: Colors.green,
       ),
     );
@@ -113,13 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _onSwipeLeft();
                       }
                     },
-                    child: JobCard(
-                      title: _jobs[_currentJobIndex]['title']!,
-                      company: _jobs[_currentJobIndex]['company']!,
-                      location: _jobs[_currentJobIndex]['location']!,
-                      salary: _jobs[_currentJobIndex]['salary']!,
-                      description: _jobs[_currentJobIndex]['description']!,
-                    ),
+                    child: DetailedJobCard(job: _jobs[_currentJobIndex]),
                   )
                 : Center(
                     child: Text(
