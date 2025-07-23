@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/welcome_screen.dart';
 import 'package:swipe_app/screens/home_screen.dart';
+import 'package:swipe_app/screens/login_screen.dart';
+import 'package:swipe_app/screens/register_screen.dart';
+import 'package:swipe_app/screens/settings_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,14 +51,16 @@ class MyApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
         ),
       ),
-      home: const HomeScreen(),
-      routes: {'/home': (context) => const HomeScreen()},
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const WelcomeScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
   }
 }

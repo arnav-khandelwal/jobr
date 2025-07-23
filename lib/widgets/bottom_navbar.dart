@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:swipe_app/screens/settings_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final ValueChanged<int> onTap;
+  final Function(int) onTap;
 
   const BottomNavBar({
     super.key,
@@ -12,23 +13,47 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      selectedItemColor: const Color(0xFF6366F1),
-      unselectedItemColor: const Color(0xFF64748B),
-      showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bolt_outlined),
-          label: 'Freelance',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings_outlined),
-          label: 'Settings',
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          if (index == 2) {
+            // Navigate to settings screen
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+            );
+          } else {
+            // Call the parent's onTap for other indices
+            onTap(index);
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF6366F1),
+        unselectedItemColor: const Color(0xFF64748B),
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.flash_on),
+            label: 'Freelance',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
     );
   }
 }
