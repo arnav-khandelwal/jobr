@@ -113,38 +113,69 @@ class DetailedJobCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.location_on,
-                      size: 18,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        job.location,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF64748B),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF64748B).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 18,
+                              color: Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                job.location,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF64748B),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 60),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        job.jobType,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF6366F1),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.work_outline,
+                              size: 18,
+                              color: Color(0xFF6366F1),
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                job.jobType,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF6366F1),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -272,7 +303,7 @@ class DetailedJobCard extends StatelessWidget {
                           child: Text(
                             skill,
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 10,
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF1E293B),
                             ),
@@ -292,7 +323,7 @@ class DetailedJobCard extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.description,
-                          size: 18,
+                          size: 14,
                           color: Color(0xFF64748B),
                         ),
                         const SizedBox(width: 4),
@@ -309,7 +340,7 @@ class DetailedJobCard extends StatelessWidget {
                     Text(
                       job.jobDescription,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 12,
                         color: Color(0xFF475569),
                         height: 1.4,
                       ),

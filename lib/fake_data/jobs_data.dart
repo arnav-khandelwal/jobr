@@ -47,7 +47,7 @@ final List<Job> availableJobs = [
     experienceRequired: "2-4 years",
     skills: ["Flutter", "Dart", "Firebase", "REST APIs", "Git"],
     jobDescription:
-        "Build beautiful mobile apps with Flutter. Work on cross-platform development and integrate with backend services.",
+        "Build beautiful mobile apps with Flutter. Cross-platform development & backend integration.",
     postedDate: "2 days ago",
     applyLink: "https://techcorp.com/careers/flutter-dev-001",
     source: "LinkedIn",
@@ -66,7 +66,7 @@ final List<Job> availableJobs = [
     experienceRequired: "1-3 years",
     skills: ["Figma", "Adobe XD", "Sketch", "Prototyping", "User Research"],
     jobDescription:
-        "Design intuitive user interfaces for web and mobile applications. Collaborate with development teams.",
+        "Design intuitive user interfaces for web and mobile apps. Collaborate with dev teams.",
     postedDate: "1 day ago",
     applyLink: "https://designpro.com/jobs/ux-designer-002",
     source: "Indeed",
@@ -85,7 +85,7 @@ final List<Job> availableJobs = [
     experienceRequired: "3-5 years",
     skills: ["Node.js", "Python", "AWS", "MongoDB", "Docker", "Kubernetes"],
     jobDescription:
-        "Work on scalable backend systems using modern technologies. Design and implement microservices architecture.",
+        "Work on scalable backend systems using modern tech. Design microservices architecture.",
     postedDate: "3 days ago",
     applyLink: "https://cloudbase.com/careers/backend-eng-003",
     source: "Company Website",
@@ -104,7 +104,7 @@ final List<Job> availableJobs = [
     experienceRequired: "0-1 years",
     skills: ["React.js", "JavaScript", "HTML", "CSS", "Git"],
     jobDescription:
-        "Learn and contribute to frontend development projects. Work with senior developers on user-facing features.",
+        "Learn frontend development. Contribute to projects with senior developers on user features.",
     postedDate: "5 days ago",
     applyLink: "https://startupxyz.com/internships/frontend-004",
     source: "AngelList",
@@ -130,7 +130,7 @@ final List<Job> availableJobs = [
       "NumPy",
     ],
     jobDescription:
-        "Analyze complex datasets and build machine learning models. Present insights to stakeholders.",
+        "Analyze complex datasets and build ML models. Present insights to stakeholders.",
     postedDate: "1 week ago",
     applyLink: "https://dataviz.com/jobs/data-scientist-005",
     source: "Naukri",
@@ -149,7 +149,7 @@ final List<Job> availableJobs = [
     experienceRequired: "2-5 years",
     skills: ["AWS", "Docker", "Jenkins", "Terraform", "Kubernetes", "Linux"],
     jobDescription:
-        "Manage cloud infrastructure and automate deployment processes. Ensure system reliability and scalability.",
+        "Manage cloud infrastructure and automate deployments. Ensure system reliability.",
     postedDate: "4 days ago",
     applyLink: "https://infratech.com/careers/devops-006",
     source: "LinkedIn",
@@ -174,7 +174,7 @@ final List<Job> availableJobs = [
       "Roadmapping",
     ],
     jobDescription:
-        "Drive product vision and strategy. Work with cross-functional teams to deliver user-centric products.",
+        "Drive product vision and strategy. Work with cross-functional teams for user products.",
     postedDate: "2 days ago",
     applyLink: "https://innovatecorp.com/jobs/pm-007",
     source: "Company Website",
@@ -193,7 +193,7 @@ final List<Job> availableJobs = [
     experienceRequired: "1-3 years",
     skills: ["Photoshop", "Illustrator", "InDesign", "Branding", "Logo Design"],
     jobDescription:
-        "Create visual designs for various clients. Work on branding, marketing materials, and digital assets.",
+        "Create visual designs for clients. Work on branding, marketing materials & digital assets.",
     postedDate: "1 day ago",
     applyLink: "https://creativehub.com/freelance/graphic-008",
     source: "Upwork",
@@ -212,7 +212,7 @@ final List<Job> availableJobs = [
     experienceRequired: "1-3 years",
     skills: ["Kotlin", "Java", "Android SDK", "Retrofit", "Room Database"],
     jobDescription:
-        "Develop native Android applications. Work on performance optimization and user experience enhancement.",
+        "Develop native Android applications. Focus on performance optimization & UX enhancement.",
     postedDate: "6 days ago",
     applyLink: "https://mobilefirst.com/careers/android-009",
     source: "Indeed",
@@ -288,7 +288,7 @@ final List<Job> availableJobs = [
       "Requirements Analysis",
     ],
     jobDescription:
-        "Analyze business processes and recommend improvements. Work with stakeholders to gather requirements.",
+        "Analyze business processes and recommend improvements. Work with stakeholders on requirements.",
     postedDate: "4 days ago",
     applyLink: "https://financeflow.com/jobs/ba-012",
     source: "Naukri",

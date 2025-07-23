@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const WelcomeScreen(),
+      home: const HomeScreen(),
       routes: {'/home': (context) => const HomeScreen()},
     );
   }
