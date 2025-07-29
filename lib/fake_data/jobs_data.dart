@@ -34,6 +34,48 @@ class Job {
     this.industry,
     this.educationRequired,
   });
+
+  factory Job.fromJson(Map<String, dynamic> json) {
+    return Job(
+      jobId: json['job_id'] ?? '',
+      jobTitle: json['job_title'] ?? '',
+      companyName: json['company_name'] ?? '',
+      location: json['location'] ?? '',
+      jobType: json['job_type'] ?? '',
+      salary: json['salary'] ?? '',
+      experienceRequired: json['experience_required'] ?? '',
+      skills: List<String>.from(json['skills'] ?? []),
+      jobDescription: json['job_description'] ?? '',
+      postedDate: json['posted_date'] ?? '',
+      applyLink: json['apply_link'] ?? '',
+      source: json['source'] ?? '',
+      remoteFriendly: json['remote_friendly'] ?? false,
+      companyLogoUrl: json['company_logo_url'],
+      industry: json['industry'],
+      educationRequired: json['education_required'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'job_id': jobId,
+      'job_title': jobTitle,
+      'company_name': companyName,
+      'location': location,
+      'job_type': jobType,
+      'salary': salary,
+      'experience_required': experienceRequired,
+      'skills': skills,
+      'job_description': jobDescription,
+      'posted_date': postedDate,
+      'apply_link': applyLink,
+      'source': source,
+      'remote_friendly': remoteFriendly,
+      'company_logo_url': companyLogoUrl,
+      'industry': industry,
+      'education_required': educationRequired,
+    };
+  }
 }
 
 final List<Job> availableJobs = [
