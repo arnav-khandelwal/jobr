@@ -12,9 +12,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _emailNotifications = true;
   bool _pushNotifications = true;
   bool _darkMode = false;
-  bool _autoApply = false;
-  String _preferredLocation = 'Bangalore';
-  String _salaryRange = '₹10L - ₹20L';
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +42,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSectionHeader('Profile'),
             const SizedBox(height: 12),
             _buildProfileCard(),
-            const SizedBox(height: 24),
-
-            // Job Preferences
-            _buildSectionHeader('Job Preferences'),
-            const SizedBox(height: 12),
-            _buildJobPreferencesSection(),
             const SizedBox(height: 24),
 
             // Notifications
@@ -145,42 +136,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildJobPreferencesSection() {
-    return Column(
-      children: [
-        _buildSettingsTile(
-          icon: Icons.location_on,
-          title: 'Preferred Location',
-          subtitle: _preferredLocation,
-          onTap: () => _showLocationPicker(),
-        ),
-        _buildSettingsTile(
-          icon: Icons.attach_money,
-          title: 'Salary Range',
-          subtitle: _salaryRange,
-          onTap: () => _showSalaryPicker(),
-        ),
-        _buildSwitchTile(
-          icon: Icons.auto_awesome,
-          title: 'Auto Apply',
-          subtitle: 'Automatically apply to jobs matching your preferences',
-          value: _autoApply,
-          onChanged: (value) {
-            setState(() {
-              _autoApply = value;
-            });
-          },
-        ),
-        _buildSettingsTile(
-          icon: Icons.work,
-          title: 'Job Types',
-          subtitle: 'Full-time, Remote',
-          onTap: () => _showJobTypesPicker(),
-        ),
-      ],
     );
   }
 
@@ -404,77 +359,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
-  }
-
-  void _showLocationPicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Preferred Location',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ...[
-              'Bangalore',
-              'Mumbai',
-              'Delhi',
-              'Hyderabad',
-              'Chennai',
-              'Remote',
-            ].map(
-              (location) => ListTile(
-                title: Text(location),
-                onTap: () {
-                  setState(() {
-                    _preferredLocation = location;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showSalaryPicker() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Salary Range',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ...['₹5L - ₹10L', '₹10L - ₹20L', '₹20L - ₹30L', '₹30L+'].map(
-              (range) => ListTile(
-                title: Text(range),
-                onTap: () {
-                  setState(() {
-                    _salaryRange = range;
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showJobTypesPicker() {
-    // Implementation for job types picker
   }
 
   void _showLanguagePicker() {

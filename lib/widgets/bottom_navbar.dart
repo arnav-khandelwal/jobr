@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/settings_screen.dart';
+import 'package:swipe_app/screens/preferences_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -28,6 +29,11 @@ class BottomNavBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: (index) {
           if (index == 2) {
+            // Navigate to preferences screen
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const PreferencesScreen()),
+            );
+          } else if (index == 3) {
             // Navigate to settings screen
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
@@ -47,6 +53,10 @@ class BottomNavBar extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.flash_on),
             label: 'Freelance',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.tune),
+            label: 'Preferences',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
