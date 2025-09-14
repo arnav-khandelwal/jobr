@@ -249,8 +249,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPanEnd: (details) {
                           if (details.velocity.pixelsPerSecond.dx > 0) {
                             _onSwipeRight();
-                          } else {
-                            _onSwipeLeft();
+                          } else if(details.velocity.pixelsPerSecond.dx < 0) {
+                            _onSwipeLeft(); // This is being triggered on tap
+                          }else{
+                            // No horizontal swipe detected
                           }
                         },
                         child: Padding(
