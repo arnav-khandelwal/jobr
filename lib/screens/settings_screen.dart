@@ -13,23 +13,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _darkMode = false;
 
+  // Helper method to get background color based on dark mode
+  Color get _backgroundColor => _darkMode ? Colors.black : Colors.white;
+  
+  // Helper method to get primary text color based on dark mode
+  Color get _primaryTextColor => _darkMode ? Colors.white : const Color(0xFF1E293B);
+  
+  // Helper method to get secondary text color based on dark mode
+  Color get _secondaryTextColor => _darkMode ? Colors.grey.shade300 : Colors.grey.shade600;
+  
+  // Helper method to get card color based on dark mode
+  Color get _cardColor => _darkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF8FAFC);
+  
+  // Helper method to get border color based on dark mode
+  Color get _borderColor => _darkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _backgroundColor, // Changed from hardcoded Colors.white
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _backgroundColor, // Changed from hardcoded Colors.white
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Settings',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1E293B),
+            color: _primaryTextColor, // Changed from hardcoded color
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF1E293B)),
+          icon: Icon(Icons.arrow_back_ios, color: _primaryTextColor), // Changed from hardcoded color
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -75,10 +90,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1E293B),
+        color: _primaryTextColor, // Changed from hardcoded color
       ),
     );
   }
@@ -103,26 +118,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'John Doe',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: _primaryTextColor, // Changed from hardcoded color
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'john.doe@example.com',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
                 ),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Flutter Developer',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF6366F1),
+                    color: Color(0xFF6366F1),
                   ),
                 ),
               ],
@@ -280,9 +295,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: _cardColor, // Changed from hardcoded color
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: _borderColor), // Changed from hardcoded color
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -303,14 +318,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: textColor ?? const Color(0xFF1E293B),
+            color: textColor ?? _primaryTextColor, // Changed from hardcoded color
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
         ),
-        trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
+        trailing: Icon(
+          Icons.chevron_right, 
+          color: _darkMode ? Colors.grey.shade400 : Colors.grey.shade400
+        ),
         onTap: onTap,
       ),
     );
@@ -326,9 +344,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: _cardColor, // Changed from hardcoded color
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: _borderColor), // Changed from hardcoded color
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -342,15 +360,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: _primaryTextColor, // Changed from hardcoded color
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
         ),
         trailing: Switch(
           value: value,
@@ -369,12 +387,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear Cache'),
-        content: const Text('Are you sure you want to clear the app cache?'),
+        backgroundColor: _cardColor, // Added dynamic color
+        title: Text('Clear Cache', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+        content: Text(
+          'Are you sure you want to clear the app cache?',
+          style: TextStyle(color: _secondaryTextColor), // Added dynamic color
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
           ),
           ElevatedButton(
             onPressed: () {
@@ -397,12 +419,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        backgroundColor: _cardColor, // Added dynamic color
+        title: Text('Sign Out', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+        content: Text(
+          'Are you sure you want to sign out?',
+          style: TextStyle(color: _secondaryTextColor), // Added dynamic color
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
           ),
           ElevatedButton(
             onPressed: () {
