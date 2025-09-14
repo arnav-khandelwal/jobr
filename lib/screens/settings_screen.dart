@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:swipe_app/providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,94 +13,82 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _emailNotifications = true;
   bool _pushNotifications = true;
-  bool _darkMode = false;
-
-  // Helper method to get background color based on dark mode
-  Color get _backgroundColor => _darkMode ? Colors.black : Colors.white;
-  
-  // Helper method to get primary text color based on dark mode
-  Color get _primaryTextColor => _darkMode ? Colors.white : const Color(0xFF1E293B);
-  
-  // Helper method to get secondary text color based on dark mode
-  Color get _secondaryTextColor => _darkMode ? Colors.grey.shade300 : Colors.grey.shade600;
-  
-  // Helper method to get card color based on dark mode
-  Color get _cardColor => _darkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF8FAFC);
-  
-  // Helper method to get border color based on dark mode
-  Color get _borderColor => _darkMode ? const Color(0xFF3A3A3A) : const Color(0xFFE2E8F0);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _backgroundColor, // Changed from hardcoded Colors.white
-      appBar: AppBar(
-        backgroundColor: _backgroundColor, // Changed from hardcoded Colors.white
-        elevation: 0,
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: _primaryTextColor, // Changed from hardcoded color
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          backgroundColor: themeProvider.backgroundColor,
+          appBar: AppBar(
+            backgroundColor: themeProvider.backgroundColor,
+            elevation: 0,
+            title: Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: themeProvider.primaryTextColor,
+              ),
+            ),
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back_ios, color: themeProvider.primaryTextColor),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: _primaryTextColor), // Changed from hardcoded color
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Section
-            _buildSectionHeader('Profile'),
-            const SizedBox(height: 12),
-            _buildProfileCard(),
-            const SizedBox(height: 24),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Section
+                _buildSectionHeader('Profile', themeProvider),
+                const SizedBox(height: 12),
+                _buildProfileCard(themeProvider),
+                const SizedBox(height: 24),
 
-            // Notifications
-            _buildSectionHeader('Notifications'),
-            const SizedBox(height: 12),
-            _buildNotificationSection(),
-            const SizedBox(height: 24),
+                // Notifications
+                _buildSectionHeader('Notifications', themeProvider),
+                const SizedBox(height: 12),
+                _buildNotificationSection(themeProvider),
+                const SizedBox(height: 24),
 
-            // App Settings
-            _buildSectionHeader('App Settings'),
-            const SizedBox(height: 12),
-            _buildAppSettingsSection(),
-            const SizedBox(height: 24),
+                // App Settings
+                _buildSectionHeader('App Settings', themeProvider),
+                const SizedBox(height: 12),
+                _buildAppSettingsSection(themeProvider),
+                const SizedBox(height: 24),
 
-            // Account
-            _buildSectionHeader('Account'),
-            const SizedBox(height: 12),
-            _buildAccountSection(),
-            const SizedBox(height: 24),
+                // Account
+                _buildSectionHeader('Account', themeProvider),
+                const SizedBox(height: 12),
+                _buildAccountSection(themeProvider),
+                const SizedBox(height: 24),
 
-            // About
-            _buildSectionHeader('About'),
-            const SizedBox(height: 12),
-            _buildAboutSection(),
-          ],
-        ),
-      ),
+                // About
+                _buildSectionHeader('About', themeProvider),
+                const SizedBox(height: 12),
+                _buildAboutSection(themeProvider),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, ThemeProvider themeProvider) {
     return Text(
       title,
       style: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: _primaryTextColor, // Changed from hardcoded color
+        color: themeProvider.primaryTextColor,
       ),
     );
   }
 
-  Widget _buildProfileCard() {
+  Widget _buildProfileCard(ThemeProvider themeProvider) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -123,13 +113,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: _primaryTextColor, // Changed from hardcoded color
+                    color: themeProvider.primaryTextColor,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'john.doe@example.com',
-                  style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
+                  style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -154,10 +144,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildNotificationSection() {
+  Widget _buildNotificationSection(ThemeProvider themeProvider) {
     return Column(
       children: [
         _buildSwitchTile(
+          themeProvider: themeProvider,
           icon: Icons.notifications,
           title: 'All Notifications',
           subtitle: 'Receive all app notifications',
@@ -169,6 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSwitchTile(
+          themeProvider: themeProvider,
           icon: Icons.email,
           title: 'Email Notifications',
           subtitle: 'Get job alerts via email',
@@ -180,6 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSwitchTile(
+          themeProvider: themeProvider,
           icon: Icons.phone_android,
           title: 'Push Notifications',
           subtitle: 'Get instant job alerts',
@@ -194,40 +187,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildAppSettingsSection() {
+  Widget _buildAppSettingsSection(ThemeProvider themeProvider) {
     return Column(
       children: [
         _buildSwitchTile(
+          themeProvider: themeProvider,
           icon: Icons.dark_mode,
           title: 'Dark Mode',
           subtitle: 'Switch to dark theme',
-          value: _darkMode,
+          value: themeProvider.isDarkMode,
           onChanged: (value) {
-            setState(() {
-              _darkMode = value;
-            });
+            themeProvider.toggleTheme();
           },
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.language,
           title: 'Language',
           subtitle: 'English',
-          onTap: () => _showLanguagePicker(),
+          onTap: () => _showLanguagePicker(themeProvider),
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.storage,
           title: 'Clear Cache',
           subtitle: 'Free up storage space',
-          onTap: () => _showClearCacheDialog(),
+          onTap: () => _showClearCacheDialog(themeProvider),
         ),
       ],
     );
   }
 
-  Widget _buildAccountSection() {
+  Widget _buildAccountSection(ThemeProvider themeProvider) {
     return Column(
       children: [
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.security,
           title: 'Privacy & Security',
           subtitle: 'Manage your privacy settings',
@@ -236,6 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.help,
           title: 'Help & Support',
           subtitle: 'Get help or contact support',
@@ -244,20 +240,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.logout,
           title: 'Sign Out',
           subtitle: 'Sign out of your account',
-          onTap: () => _showSignOutDialog(),
+          onTap: () => _showSignOutDialog(themeProvider),
           textColor: Colors.red,
         ),
       ],
     );
   }
 
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(ThemeProvider themeProvider) {
     return Column(
       children: [
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.info,
           title: 'About jobr',
           subtitle: 'Version 1.0.0',
@@ -266,6 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.article,
           title: 'Terms of Service',
           subtitle: 'Read our terms and conditions',
@@ -274,6 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         _buildSettingsTile(
+          themeProvider: themeProvider,
           icon: Icons.privacy_tip,
           title: 'Privacy Policy',
           subtitle: 'Read our privacy policy',
@@ -286,6 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSettingsTile({
+    required ThemeProvider themeProvider,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -295,9 +296,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: _cardColor, // Changed from hardcoded color
+        color: themeProvider.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor), // Changed from hardcoded color
+        border: Border.all(color: themeProvider.borderColor),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -318,16 +319,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: textColor ?? _primaryTextColor, // Changed from hardcoded color
+            color: textColor ?? themeProvider.primaryTextColor,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
+          style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
         ),
         trailing: Icon(
           Icons.chevron_right, 
-          color: _darkMode ? Colors.grey.shade400 : Colors.grey.shade400
+          color: themeProvider.secondaryTextColor,
         ),
         onTap: onTap,
       ),
@@ -335,6 +336,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSwitchTile({
+    required ThemeProvider themeProvider,
     required IconData icon,
     required String title,
     required String subtitle,
@@ -344,9 +346,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: _cardColor, // Changed from hardcoded color
+        color: themeProvider.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _borderColor), // Changed from hardcoded color
+        border: Border.all(color: themeProvider.borderColor),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -363,12 +365,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: _primaryTextColor, // Changed from hardcoded color
+            color: themeProvider.primaryTextColor,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: _secondaryTextColor), // Changed from hardcoded color
+          style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
         ),
         trailing: Switch(
           value: value,
@@ -379,24 +381,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showLanguagePicker() {
-    // Implementation for language picker
+  void _showLanguagePicker(ThemeProvider themeProvider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeProvider.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Language',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: themeProvider.primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              title: Text('English', style: TextStyle(color: themeProvider.primaryTextColor)),
+              trailing: const Icon(Icons.check, color: Color(0xFF6366F1)),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              title: Text('Spanish', style: TextStyle(color: themeProvider.primaryTextColor)),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              title: Text('French', style: TextStyle(color: themeProvider.primaryTextColor)),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _showClearCacheDialog() {
+  void _showClearCacheDialog(ThemeProvider themeProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _cardColor, // Added dynamic color
-        title: Text('Clear Cache', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+        backgroundColor: themeProvider.cardColor,
+        title: Text('Clear Cache', style: TextStyle(color: themeProvider.primaryTextColor)),
         content: Text(
           'Are you sure you want to clear the app cache?',
-          style: TextStyle(color: _secondaryTextColor), // Added dynamic color
+          style: TextStyle(color: themeProvider.secondaryTextColor),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+            child: Text('Cancel', style: TextStyle(color: themeProvider.primaryTextColor)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -415,20 +453,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showSignOutDialog() {
+  void _showSignOutDialog(ThemeProvider themeProvider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _cardColor, // Added dynamic color
-        title: Text('Sign Out', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+        backgroundColor: themeProvider.cardColor,
+        title: Text('Sign Out', style: TextStyle(color: themeProvider.primaryTextColor)),
         content: Text(
           'Are you sure you want to sign out?',
-          style: TextStyle(color: _secondaryTextColor), // Added dynamic color
+          style: TextStyle(color: themeProvider.secondaryTextColor),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: _primaryTextColor)), // Added dynamic color
+            child: Text('Cancel', style: TextStyle(color: themeProvider.primaryTextColor)),
           ),
           ElevatedButton(
             onPressed: () {

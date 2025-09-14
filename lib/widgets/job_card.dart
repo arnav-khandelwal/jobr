@@ -6,6 +6,9 @@ class JobCard extends StatelessWidget {
   final String location;
   final String salary;
   final String description;
+  final Map<String, dynamic> job;
+  final VoidCallback onSwipeLeft;
+  final VoidCallback onSwipeRight;
 
   const JobCard({
     super.key,
@@ -14,6 +17,9 @@ class JobCard extends StatelessWidget {
     required this.location,
     required this.salary,
     required this.description,
+    required this.job,
+    required this.onSwipeLeft,
+    required this.onSwipeRight,
   });
 
   @override

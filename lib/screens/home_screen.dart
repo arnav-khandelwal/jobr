@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:swipe_app/providers/theme_provider.dart';
 import 'package:swipe_app/widgets/location_app_bar.dart';
 import 'package:swipe_app/widgets/filters_bar.dart';
 import 'package:swipe_app/widgets/detailed_job_card.dart';
@@ -127,146 +129,165 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: LocationAppBar(
-        location: _location,
-        onLocationTap: () async {
-          setState(() {
-            _location = _location == 'India' ? 'Remote' : 'India';
-          });
-          await _loadJobs(); // Reload jobs for new location
-        },
-        onProfileTap: () {
-          // Handle profile tap
-        },
-      ),
-      body: Column(
-        children: [
-          // Server status indicator
-          if (!_isServerHealthy)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(8),
-              color: Colors.orange.shade100,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.warning, size: 16, color: Colors.orange.shade700),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Using local data - Server offline',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.orange.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          FiltersBar(
-            filters: _filters,
-            selectedIndex: _selectedFilter,
-            onFilterSelected: (index) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Scaffold(
+          backgroundColor: themeProvider.backgroundColor,
+          appBar: LocationAppBar(
+            location: _location,
+            onLocationTap: () async {
               setState(() {
-                _selectedFilter = index;
+                _location = _location == 'India' ? 'Remote' : 'India';
+              });
+              await _loadJobs(); // Reload jobs for new location
+            },
+            onProfileTap: () {
+              // Handle profile tap
+            },
+          ),
+          body: Column(
+            children: [
+              // Server status indicator
+              if (!_isServerHealthy)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  color: Colors.orange.shade100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.warning, size: 16, color: Colors.orange.shade700),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Using local data - Server offline',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              FiltersBar(
+                filters: _filters,
+                selectedIndex: _selectedFilter,
+                onFilterSelected: (index) {
+                  setState(() {
+                    _selectedFilter = index;
+                  });
+                },
+              ),
+
+              // Refresh button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Jobs (${_jobs.length})',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: themeProvider.primaryTextColor,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _isLoading ? null : _refreshJobs,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(Icons.refresh, color: themeProvider.primaryTextColor),
+                      tooltip: 'Refresh jobs',
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Expanded(
+                child: _isLoading
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Loading amazing jobs for you...',
+                              style: TextStyle(color: themeProvider.primaryTextColor),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _jobs.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.work_off, size: 64, color: themeProvider.secondaryTextColor),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No jobs found',
+                              style: TextStyle(color: themeProvider.primaryTextColor),
+                            ),
+                            Text(
+                              'Try refreshing or change your filters',
+                              style: TextStyle(color: themeProvider.secondaryTextColor),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _currentJobIndex < _jobs.length
+                    ? GestureDetector(
+                        onPanEnd: (details) {
+                          if (details.velocity.pixelsPerSecond.dx > 0) {
+                            _onSwipeRight();
+                          } else {
+                            _onSwipeLeft();
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: DetailedJobCard(job: _jobs[_currentJobIndex]),
+                        ),
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.check_circle, size: 64, color: Colors.green),
+                            const SizedBox(height: 16),
+                            Text(
+                              'All jobs reviewed!',
+                              style: TextStyle(color: themeProvider.primaryTextColor),
+                            ),
+                            Text(
+                              'Refresh to see more opportunities',
+                              style: TextStyle(color: themeProvider.secondaryTextColor),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+          bottomNavigationBar: BottomNavBar(
+            currentIndex: _navIndex,
+            onTap: (index) {
+              setState(() {
+                _navIndex = index;
               });
             },
           ),
-
-          // Refresh button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Jobs (${_jobs.length})',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                IconButton(
-                  onPressed: _isLoading ? null : _refreshJobs,
-                  icon: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh),
-                  tooltip: 'Refresh jobs',
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Loading amazing jobs for you...'),
-                      ],
-                    ),
-                  )
-                : _jobs.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.work_off, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('No jobs found'),
-                        Text('Try refreshing or change your filters'),
-                      ],
-                    ),
-                  )
-                : _currentJobIndex < _jobs.length
-                ? GestureDetector(
-                    onPanEnd: (details) {
-                      if (details.velocity.pixelsPerSecond.dx > 0) {
-                        _onSwipeRight();
-                      } else {
-                        _onSwipeLeft();
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: DetailedJobCard(job: _jobs[_currentJobIndex]),
-                    ),
-                  )
-                : const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle, size: 64, color: Colors.green),
-                        SizedBox(height: 16),
-                        Text('All jobs reviewed!'),
-                        Text('Refresh to see more opportunities'),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _navIndex,
-        onTap: (index) {
-          setState(() {
-            _navIndex = index;
-          });
-        },
-      ),
+        );
+      },
     );
   }
 }
