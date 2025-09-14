@@ -100,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Text('Applied to ${_jobs[_currentJobIndex].jobTitle}!'),
         backgroundColor: Colors.green,
+        duration: const Duration(milliseconds: 400),
       ),
     );
     setState(() {
@@ -116,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       SnackBar(
         content: Text('Skipped ${_jobs[_currentJobIndex].jobTitle}'),
         backgroundColor: Colors.grey,
+        duration: const Duration(milliseconds: 400),
       ),
     );
     setState(() {
