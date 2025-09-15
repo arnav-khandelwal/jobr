@@ -9,3 +9,4 @@ aiohttp==3.9.1
 lxml==4.9.3
 fake-useragent==1.4.0
 python-dotenv==1.0.0
+selenium==4.15.2
