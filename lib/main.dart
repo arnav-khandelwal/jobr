@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
 import 'package:swipe_app/screens/home_screen.dart';
+import 'package:swipe_app/screens/login_screen.dart';
+import 'package:swipe_app/screens/welcome_screen.dart';
 
 void main() {
   runApp(
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget {
             visualDensity: VisualDensity.adaptivePlatformDensity,
             scaffoldBackgroundColor: themeProvider.backgroundColor,
           ),
-          home: const HomeScreen(),
+          home: const WelcomeScreen(),
         );
       },
     );

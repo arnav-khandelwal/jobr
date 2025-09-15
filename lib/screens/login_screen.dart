@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/register_screen.dart';
-
+import 'package:swipe_app/screens/home_screen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -37,14 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Show success message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful!'),
-            backgroundColor: Colors.green,
-          ),
+         Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()), // Changed from LandingScreen to HomeScreen
         );
-        await Future.delayed(const Duration(milliseconds: 500));
-        Navigator.pushReplacementNamed(context, '/home');
       }
     }
   }

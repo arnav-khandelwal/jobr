@@ -51,8 +51,8 @@ class BottomNavBar extends StatelessWidget {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.flash_on),
-            label: 'Freelance',
+            icon: Icon(Icons.assignment_outlined), // Shows a clipboard with checkmarks
+            label: 'Track',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.tune),
