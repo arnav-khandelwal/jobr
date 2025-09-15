@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/settings_screen.dart';
 import 'package:swipe_app/screens/preferences_screen.dart';
-
+import 'package:swipe_app/screens/track_jobs_screen.dart';
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -28,7 +28,11 @@ class BottomNavBar extends StatelessWidget {
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {
-          if (index == 2) {
+          if (index == 1) { // Track index
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const TrackJobsScreen()),
+            );
+          } else if (index == 2) {
             // Navigate to preferences screen
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const PreferencesScreen()),
