@@ -37,8 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadJobs();
+    // Check server health first, then load jobs so the UI reflects real status
     _checkServerHealth();
+    _loadJobs();
   }
 
   Future<void> _checkServerHealth() async {
@@ -67,13 +68,18 @@ class _HomeScreenState extends State<HomeScreen> {
           _jobs = jobs;
           _currentJobIndex = 0;
           _isLoading = false;
+          // If fetch succeeded, mark server healthy so UI stops showing local-data warning
+          _isServerHealthy = true;
         });
       }
     } catch (e) {
+      debugPrint('Error fetching jobs from API: $e');
       if (mounted) {
         setState(() {
           _jobs = availableJobs; // Fallback to local data
           _isLoading = false;
+          // Mark server as unhealthy on failure
+          _isServerHealthy = false;
         });
       }
     }
@@ -158,7 +164,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.warning, size: 16, color: Colors.orange.shade700),
+                      Icon(
+                        Icons.warning,
+                        size: 16,
+                        color: Colors.orange.shade700,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Using local data - Server offline',
@@ -184,7 +194,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Refresh button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -204,7 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : Icon(Icons.refresh, color: themeProvider.primaryTextColor),
+                          : Icon(
+                              Icons.refresh,
+                              color: themeProvider.primaryTextColor,
+                            ),
                       tooltip: 'Refresh jobs',
                     ),
                   ],
@@ -223,7 +239,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 16),
                             Text(
                               'Loading amazing jobs for you...',
-                              style: TextStyle(color: themeProvider.primaryTextColor),
+                              style: TextStyle(
+                                color: themeProvider.primaryTextColor,
+                              ),
                             ),
                           ],
                         ),
@@ -233,15 +251,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.work_off, size: 64, color: themeProvider.secondaryTextColor),
+                            Icon(
+                              Icons.work_off,
+                              size: 64,
+                              color: themeProvider.secondaryTextColor,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               'No jobs found',
-                              style: TextStyle(color: themeProvider.primaryTextColor),
+                              style: TextStyle(
+                                color: themeProvider.primaryTextColor,
+                              ),
                             ),
                             Text(
                               'Try refreshing or change your filters',
-                              style: TextStyle(color: themeProvider.secondaryTextColor),
+                              style: TextStyle(
+                                color: themeProvider.secondaryTextColor,
+                              ),
                             ),
                           ],
                         ),
@@ -251,9 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPanEnd: (details) {
                           if (details.velocity.pixelsPerSecond.dx > 0) {
                             _onSwipeRight();
-                          } else if(details.velocity.pixelsPerSecond.dx < 0) {
+                          } else if (details.velocity.pixelsPerSecond.dx < 0) {
                             _onSwipeLeft(); // This is being triggered on tap
-                          }else{
+                          } else {
                             // No horizontal swipe detected
                           }
                         },
@@ -266,15 +292,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.check_circle, size: 64, color: Colors.green),
+                            const Icon(
+                              Icons.check_circle,
+                              size: 64,
+                              color: Colors.green,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               'All jobs reviewed!',
-                              style: TextStyle(color: themeProvider.primaryTextColor),
+                              style: TextStyle(
+                                color: themeProvider.primaryTextColor,
+                              ),
                             ),
                             Text(
                               'Refresh to see more opportunities',
-                              style: TextStyle(color: themeProvider.secondaryTextColor),
+                              style: TextStyle(
+                                color: themeProvider.secondaryTextColor,
+                              ),
                             ),
                           ],
                         ),
