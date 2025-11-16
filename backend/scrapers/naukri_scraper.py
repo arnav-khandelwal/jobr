@@ -58,7 +58,8 @@ class NaukriScraper(BaseScraper):
                 # Let's see what elements are available
                 print("Available div classes:", [div.get('class') for div in soup.find_all('div')[:20]])
 
-            for card in job_cards[:10]:  # Limit to 10 jobs
+            # Parse all discovered job cards on the page
+            for card in job_cards:
                 job = self._parse_job_card(card)
                 if job:
                     jobs.append(job)

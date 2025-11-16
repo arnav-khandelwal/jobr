@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Test script for Naukri scraper
-Run this to test if the scraper works before starting the API
+Test script for scrapers
+Run this to test if the scrapers work before starting the API
 """
 
 from scrapers.naukri_scraper import NaukriScraper
+from scrapers.remoteonly_scraper import RemoteOnlyScraper
 
 def test_naukri_scraper():
     print("Testing Naukri Scraper...")
@@ -32,3 +33,18 @@ def test_naukri_scraper():
 
 if __name__ == "__main__":
     test_naukri_scraper()
+    print("\nTesting RemoteOnly Scraper...")
+    ro = RemoteOnlyScraper()
+    try:
+        jobs = ro.scrape_jobs("software", "remote", 1)
+        print(f"RemoteOnly: scraped {len(jobs)} jobs")
+        if jobs:
+            j = jobs[0]
+            print(f"Title: {j.job_title}")
+            print(f"Company: {j.company_name}")
+            print(f"Location: {j.location}")
+            print(f"Salary: {j.salary}")
+            print(f"Type: {j.job_type}")
+            print(f"Apply: {j.apply_link}")
+    except Exception as e:
+        print(f"RemoteOnly error: {e}")

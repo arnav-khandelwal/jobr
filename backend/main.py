@@ -6,11 +6,12 @@ from datetime import datetime
 
 from models.job import Job, JobResponse
 from scrapers.naukri_scraper import NaukriScraper
+from scrapers.remoteonly_scraper import RemoteOnlyScraper
 from utils.data_processor import DataProcessor
 
 app = FastAPI(
     title="JobScraper API",
-    description="API for scraping job data from Naukri",
+    description="API for scraping job data from Naukri and RemoteOnly",
     version="1.0.0"
 )
 
@@ -24,6 +25,7 @@ app.add_middleware(
 
 # Initialize scraper and processor
 naukri_scraper = NaukriScraper()
+remoteonly_scraper = RemoteOnlyScraper()
 data_processor = DataProcessor()
 
 @app.get("/")
@@ -49,6 +51,15 @@ async def get_jobs(
             print(f"Error with Naukri scraper: {e}")
             source_breakdown["naukri"] = 0
 
+        # Use RemoteOnly scraper for remote jobs
+        try:
+            remote_jobs = remoteonly_scraper.scrape_jobs(search_term=search_term, location="remote", pages=1)
+            all_jobs.extend(remote_jobs)
+            source_breakdown["remoteonly"] = len(remote_jobs)
+        except Exception as e:
+            print(f"Error with RemoteOnly scraper: {e}")
+            source_breakdown["remoteonly"] = 0
+
         # Remove duplicates
         unique_jobs = data_processor.remove_duplicates(all_jobs)
 
@@ -68,7 +79,8 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now(),
         "scrapers": {
-            "naukri": "active"
+            "naukri": "active",
+            "remoteonly": "active"
         }
     }
 
