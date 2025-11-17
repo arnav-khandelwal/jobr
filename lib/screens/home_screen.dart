@@ -22,6 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   bool _isServerHealthy = false;
 
+  // NEW: automation flags
+  bool _automationInProgress = false;
+  bool _suppressSnackbars = false;
+
   final List<String> _filters = [
     'All',
     'Remote',
@@ -102,13 +106,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSwipeRight() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Applied to ${_jobs[_currentJobIndex].jobTitle}!'),
-        backgroundColor: Colors.green,
-        duration: const Duration(milliseconds: 400),
-      ),
-    );
+    // Suppress snackbars during automation to avoid spam
+    if (!_suppressSnackbars) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Applied to ${_jobs[_currentJobIndex].jobTitle}!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(milliseconds: 400),
+        ),
+      );
+    }
     setState(() {
       if (_currentJobIndex < _jobs.length - 1) {
         _currentJobIndex++;
@@ -133,6 +140,108 @@ class _HomeScreenState extends State<HomeScreen> {
         _currentJobIndex = 0; // Reset to first job
       }
     });
+  }
+
+  // NEW: start automation for count jobs. Pass -1 for "All available"
+  Future<void> _startAutomation(int requestedCount) async {
+    if (_jobs.isEmpty) return;
+
+    final remaining = _jobs.length - _currentJobIndex;
+    final toApply = requestedCount < 0 ? remaining : (requestedCount > remaining ? remaining : requestedCount);
+
+    if (toApply <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No jobs remaining to automate')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _automationInProgress = true;
+      _suppressSnackbars = true;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Auto-apply started for $toApply job${toApply == 1 ? '' : 's'}'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+
+    for (var i = 0; i < toApply; i++) {
+      if (!mounted) return;
+      _onSwipeRight(); // reuse same path as manual apply
+      await Future.delayed(const Duration(milliseconds: 450));
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _automationInProgress = false;
+      _suppressSnackbars = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Auto-apply complete: Applied to $toApply job${toApply == 1 ? '' : 's'}'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  // NEW: Automate menu button widget
+  Widget _buildAutomateMenu(ThemeProvider themeProvider) {
+    final disabled = _isLoading || _automationInProgress || _jobs.isEmpty;
+
+    return IgnorePointer(
+      ignoring: disabled,
+      child: Opacity(
+        opacity: disabled ? 0.5 : 1,
+        child: PopupMenuButton<int>(
+          tooltip: 'Automate right-swipe',
+          onSelected: (value) {
+            if (disabled) return;
+            _startAutomation(value);
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 5, child: Text('5')),
+            PopupMenuItem(value: 10, child: Text('10')),
+            PopupMenuItem(value: 20, child: Text('20')),
+            PopupMenuItem(value: -1, child: Text('All available')),
+          ],
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _automationInProgress ? Icons.autorenew : Icons.auto_mode,
+                  color: const Color(0xFF6366F1),
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _automationInProgress ? 'Automating...' : 'Automate',
+                  style: const TextStyle(
+                    color: Color(0xFF6366F1),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6366F1), size: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -209,19 +318,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: themeProvider.primaryTextColor,
                       ),
                     ),
-                    IconButton(
-                      onPressed: _isLoading ? null : _refreshJobs,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              Icons.refresh,
-                              color: themeProvider.primaryTextColor,
-                            ),
-                      tooltip: 'Refresh jobs',
+                    // NEW: Automate + Refresh controls grouped
+                    Row(
+                      children: [
+                        _buildAutomateMenu(themeProvider),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: _isLoading ? null : _refreshJobs,
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Icon(Icons.refresh, color: themeProvider.primaryTextColor),
+                          tooltip: 'Refresh jobs',
+                        ),
+                      ],
                     ),
                   ],
                 ),
