@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/settings_screen.dart';
 import 'package:swipe_app/screens/preferences_screen.dart';
 import 'package:swipe_app/screens/track_jobs_screen.dart';
+import 'package:swipe_app/screens/stand_outs_screen.dart';
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -28,16 +29,21 @@ class BottomNavBar extends StatelessWidget {
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: (index) {
-          if (index == 1) { // Track index
+          if (index == 1) {
+            // Stand Outs screen
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const StandOutsScreen()),
+            );
+          } else if (index == 2) { // Track index shifted to 2
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const TrackJobsScreen()),
             );
-          } else if (index == 2) {
+          } else if (index == 3) {
             // Navigate to preferences screen
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const PreferencesScreen()),
             );
-          } else if (index == 3) {
+          } else if (index == 4) {
             // Navigate to settings screen
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const SettingsScreen()),
@@ -54,8 +60,9 @@ class BottomNavBar extends StatelessWidget {
         elevation: 0,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Stand Outs'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined), // Shows a clipboard with checkmarks
+            icon: Icon(Icons.assignment_outlined),
             label: 'Track',
           ),
           BottomNavigationBarItem(

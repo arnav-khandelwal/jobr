@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Opacity(
         opacity: disabled ? 0.5 : 1,
         child: PopupMenuButton<int>(
-          tooltip: 'Automate right-swipe',
+          tooltip: 'AutoApply right-swipe',
           onSelected: (value) {
             if (disabled) return;
             _startAutomation(value);
@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  _automationInProgress ? 'Automating...' : 'Automate',
+                  _automationInProgress ? 'AutoApplying...' : 'AutoApply',
                   style: const TextStyle(
                     color: Color(0xFF6366F1),
                     fontWeight: FontWeight.w600,
