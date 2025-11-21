@@ -7,6 +7,7 @@ import 'package:swipe_app/widgets/detailed_job_card.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
 import 'package:swipe_app/fake_data/jobs_data.dart';
 import 'package:swipe_app/services/job_api_service.dart';
+import 'package:swipe_app/services/job_cache_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -36,14 +37,37 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   List<Job> _jobs = [];
-  int _currentJobIndex = 0;
+  int _currentJobIndex = 0; // still used to reference current card
+  Set<String> _viewedJobIds = {};
 
   @override
   void initState() {
     super.initState();
-    // Check server health first, then load jobs so the UI reflects real status
-    _checkServerHealth();
-    _loadJobs();
+    _initJobs();
+  }
+
+  Future<void> _initJobs() async {
+    await _checkServerHealth();
+    // Load cached jobs & viewed IDs
+    final cached = await JobCacheService.loadJobs();
+    final viewed = await JobCacheService.loadViewedJobIds();
+    // Filter out viewed jobs
+    final filtered = cached.where((j) => !viewed.contains(j.jobId)).toList();
+    // If no cached jobs (or all viewed) -> fetch
+    if (filtered.isEmpty) {
+      await _loadJobs();
+      return;
+    }
+    // Shuffle and set state
+    filtered.shuffle();
+    if (mounted) {
+      setState(() {
+        _jobs = filtered;
+        _currentJobIndex = 0;
+        _isLoading = false;
+        _viewedJobIds = viewed;
+      });
+    }
   }
 
   Future<void> _checkServerHealth() async {
@@ -67,12 +91,17 @@ class _HomeScreenState extends State<HomeScreen> {
         pages: 3,
       );
 
+      // Shuffle jobs so user sees random order
+      jobs.shuffle();
+      // Persist jobs in cache
+      await JobCacheService.saveJobs(jobs);
+      await JobCacheService.clearViewedJobIds();
+      _viewedJobIds.clear();
       if (mounted) {
         setState(() {
           _jobs = jobs;
           _currentJobIndex = 0;
           _isLoading = false;
-          // If fetch succeeded, mark server healthy so UI stops showing local-data warning
           _isServerHealthy = true;
         });
       }
@@ -105,40 +134,52 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _removeCurrentJobAndAdvance({required bool applied}) {
+    if (_jobs.isEmpty) return;
+    final job = _jobs[_currentJobIndex];
+    _viewedJobIds.add(job.jobId);
+    JobCacheService.addViewedJobId(job.jobId); // persist viewed
+
+    // Remove the job from list
+    _jobs.removeAt(_currentJobIndex);
+
+    if (_currentJobIndex >= _jobs.length) {
+      _currentJobIndex = 0; // reset index if beyond end
+    }
+  }
+
   void _onSwipeRight() {
     // Suppress snackbars during automation to avoid spam
     if (!_suppressSnackbars) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Applied to ${_jobs[_currentJobIndex].jobTitle}!'),
+          content: Text(
+            _jobs.isNotEmpty
+                ? 'Applied to ${_jobs[_currentJobIndex].jobTitle}!'
+                : 'Applied',
+          ),
           backgroundColor: Colors.green,
           duration: const Duration(milliseconds: 400),
         ),
       );
     }
     setState(() {
-      if (_currentJobIndex < _jobs.length - 1) {
-        _currentJobIndex++;
-      } else {
-        _currentJobIndex = 0; // Reset to first job
-      }
+      _removeCurrentJobAndAdvance(applied: true);
     });
   }
 
   void _onSwipeLeft() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Skipped ${_jobs[_currentJobIndex].jobTitle}'),
-        backgroundColor: Colors.grey,
-        duration: const Duration(milliseconds: 400),
-      ),
-    );
+    if (_jobs.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Skipped ${_jobs[_currentJobIndex].jobTitle}'),
+          backgroundColor: Colors.grey,
+          duration: const Duration(milliseconds: 400),
+        ),
+      );
+    }
     setState(() {
-      if (_currentJobIndex < _jobs.length - 1) {
-        _currentJobIndex++;
-      } else {
-        _currentJobIndex = 0; // Reset to first job
-      }
+      _removeCurrentJobAndAdvance(applied: false);
     });
   }
 
@@ -147,7 +188,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_jobs.isEmpty) return;
 
     final remaining = _jobs.length - _currentJobIndex;
-    final toApply = requestedCount < 0 ? remaining : (requestedCount > remaining ? remaining : requestedCount);
+    final toApply = requestedCount < 0
+        ? remaining
+        : (requestedCount > remaining ? remaining : requestedCount);
 
     if (toApply <= 0) {
       if (mounted) {
@@ -166,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Auto-apply started for $toApply job${toApply == 1 ? '' : 's'}'),
+          content: Text(
+            'Auto-apply started for $toApply job${toApply == 1 ? '' : 's'}',
+          ),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -186,7 +231,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Auto-apply complete: Applied to $toApply job${toApply == 1 ? '' : 's'}'),
+        content: Text(
+          'Auto-apply complete: Applied to $toApply job${toApply == 1 ? '' : 's'}',
+        ),
         backgroundColor: Colors.green,
       ),
     );
@@ -217,7 +264,9 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF6366F1).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+              border: Border.all(
+                color: const Color(0xFF6366F1).withOpacity(0.3),
+              ),
             ),
             child: Row(
               children: [
@@ -235,7 +284,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6366F1), size: 18),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Color(0xFF6366F1),
+                  size: 18,
+                ),
               ],
             ),
           ),
@@ -329,9 +382,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
-                              : Icon(Icons.refresh, color: themeProvider.primaryTextColor),
+                              : Icon(
+                                  Icons.refresh,
+                                  color: themeProvider.primaryTextColor,
+                                ),
                           tooltip: 'Refresh jobs',
                         ),
                       ],
@@ -365,19 +423,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.work_off,
+                              Icons.check_circle_outline,
                               size: 64,
                               color: themeProvider.secondaryTextColor,
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No jobs found',
+                              'All current jobs viewed',
                               style: TextStyle(
                                 color: themeProvider.primaryTextColor,
                               ),
                             ),
                             Text(
-                              'Try refreshing or change your filters',
+                              'Refresh to view more',
                               style: TextStyle(
                                 color: themeProvider.secondaryTextColor,
                               ),

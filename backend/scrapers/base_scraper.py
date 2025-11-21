@@ -25,7 +25,7 @@ class BaseScraper(ABC):
         for attempt in range(retries):
             try:
                 time.sleep(random.uniform(1, 3))
-                response = self.session.get(url, timeout=10)
+                response = self.session.get(url, timeout=40)
                 response.raise_for_status()
                 return BeautifulSoup(response.content, 'html.parser')
             except Exception as e:

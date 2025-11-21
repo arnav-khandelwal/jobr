@@ -17,7 +17,7 @@ class JobApiService {
             Uri.parse('$baseUrl/api/jobs'),
             headers: {'Content-Type': 'application/json'},
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 200));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -43,7 +43,7 @@ class JobApiService {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/api/health'))
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 100));
 
       return response.statusCode == 200;
     } catch (e) {

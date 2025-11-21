@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_app/fake_data/jobs_data.dart';
+import 'package:swipe_app/services/job_cache_service.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
-import 'package:swipe_app/widgets/compact_job_card.dart';
 import 'package:swipe_app/widgets/detailed_job_card.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
 
@@ -14,8 +14,8 @@ class StandOutsScreen extends StatefulWidget {
 }
 
 class _StandOutsScreenState extends State<StandOutsScreen> {
-  late final List<Job> _topJobs;
-  late final List<Map<String, dynamic>> _topApplications;
+  List<Job> _topJobs = const [];
+  bool _loading = true;
   int _navIndex = 1; // Stand Outs tab index in BottomNavBar
   int _currentJobIndex = 0;
   final Set<String> _appliedJobIds = {};
@@ -23,8 +23,19 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
   @override
   void initState() {
     super.initState();
-    _topJobs = _selectTopJobs(availableJobs, 3);
-    _topApplications = _selectTopApplications(availableJobs, 3);
+    _initStandouts();
+  }
+
+  Future<void> _initStandouts() async {
+    // Load from async storage; show top 3 based on heuristic
+    final cached = await JobCacheService.loadJobs();
+    final top = _selectTopJobs(cached, 3);
+    if (!mounted) return;
+    setState(() {
+      _topJobs = top;
+      _currentJobIndex = 0;
+      _loading = false;
+    });
   }
 
   @override
@@ -64,22 +75,40 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                           color: themeProvider.primaryTextColor,
                         ),
                       ),
-                      Text(
-                        _currentJobIndex < _topJobs.length
-                            ? '${_currentJobIndex + 1} of ${_topJobs.length}'
-                            : '${_topJobs.length} of ${_topJobs.length}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: themeProvider.secondaryTextColor,
+                      if (!_loading && _topJobs.isNotEmpty)
+                        Text(
+                          _currentJobIndex < _topJobs.length
+                              ? '${_currentJobIndex + 1} of ${_topJobs.length}'
+                              : '${_topJobs.length} of ${_topJobs.length}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: themeProvider.secondaryTextColor,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
-                if (_currentJobIndex < _topJobs.length) ...[
+                if (_loading) ...[
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(
+                        children: const [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 12),
+                          Text('Loading your stand-out jobs...'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else if (_currentJobIndex < _topJobs.length &&
+                    _topJobs.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildStatusRow(_topJobs[_currentJobIndex], themeProvider),
+                    child: _buildStatusRow(
+                      _topJobs[_currentJobIndex],
+                      themeProvider,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _buildSwipeableJobCard(_topJobs[_currentJobIndex]),
@@ -89,51 +118,37 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Column(
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                          Icon(
+                            _topJobs.isEmpty ? Icons.inbox : Icons.check_circle,
+                            color: _topJobs.isEmpty
+                                ? Colors.grey
+                                : Colors.green,
+                            size: 48,
+                          ),
                           const SizedBox(height: 8),
                           Text(
-                            'All stand-out jobs reviewed!',
-                            style: TextStyle(color: themeProvider.primaryTextColor, fontSize: 16),
+                            _topJobs.isEmpty
+                                ? 'No cached jobs found'
+                                : 'All stand-out jobs reviewed!',
+                            style: TextStyle(
+                              color: themeProvider.primaryTextColor,
+                              fontSize: 16,
+                            ),
                           ),
                           Text(
-                            'Scroll to see Top Applications below',
-                            style: TextStyle(color: themeProvider.secondaryTextColor, fontSize: 12),
+                            _topJobs.isEmpty
+                                ? 'Load jobs from Home, then revisit Stand Outs.'
+                                : 'No more stand-out jobs. Come back later for new matches.',
+                            style: TextStyle(
+                              color: themeProvider.secondaryTextColor,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ],
-
-                // Top Applications section
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Top Applications',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: themeProvider.primaryTextColor,
-                        ),
-                      ),
-                      Text(
-                        '${_topApplications.length} shown',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: themeProvider.secondaryTextColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ..._topApplications.map((app) => CompactJobCard(
-                      job: app['job'] as Job,
-                      status: app['status'] as String,
-                      onStatusChanged: (_) {},
-                    )),
                 const SizedBox(height: 16),
               ],
             ),
@@ -161,16 +176,15 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
   List<Job> _selectTopJobs(List<Job> jobs, int count) {
     const preferredSkills = {'Flutter', 'Dart', 'Python', 'AWS'};
 
-    final scored = jobs
-        .map((j) {
-          final skillMatches = j.skills.where((s) => preferredSkills.contains(s)).length;
-          final remoteBoost = j.remoteFriendly ? 1 : 0;
-          final fullTimeBoost = j.jobType.toLowerCase().contains('full') ? 1 : 0;
-          final score = skillMatches * 2 + remoteBoost + fullTimeBoost;
-          return (job: j, score: score);
-        })
-        .toList()
-      ..sort((a, b) => b.score.compareTo(a.score));
+    final scored = jobs.map((j) {
+      final skillMatches = j.skills
+          .where((s) => preferredSkills.contains(s))
+          .length;
+      final remoteBoost = j.remoteFriendly ? 1 : 0;
+      final fullTimeBoost = j.jobType.toLowerCase().contains('full') ? 1 : 0;
+      final score = skillMatches * 2 + remoteBoost + fullTimeBoost;
+      return (job: j, score: score);
+    }).toList()..sort((a, b) => b.score.compareTo(a.score));
 
     return scored.take(count).map((e) => e.job).toList();
   }
@@ -227,7 +241,9 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
 
   Widget _buildStatusRow(Job job, ThemeProvider themeProvider) {
     final bool applied = _appliedJobIds.contains(job.jobId);
-    final Color color = applied ? const Color(0xFF10B981) : const Color(0xFF64748B);
+    final Color color = applied
+        ? const Color(0xFF10B981)
+        : const Color(0xFF64748B);
     final String label = applied ? 'Applied' : 'Not applied';
 
     return Row(
@@ -242,11 +258,19 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(applied ? Icons.check_circle : Icons.radio_button_unchecked, size: 14, color: color),
+              Icon(
+                applied ? Icons.check_circle : Icons.radio_button_unchecked,
+                size: 14,
+                color: color,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -255,29 +279,5 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
     );
   }
 
-  // Use some of the available jobs as mock applications and prioritize accepted > pending > rejected
-  List<Map<String, dynamic>> _selectTopApplications(List<Job> jobs, int count) {
-    final mockApps = <Map<String, dynamic>>[
-      {'job': jobs[0], 'status': 'accepted', 'id': 's1'},
-      {'job': jobs[2], 'status': 'pending', 'id': 's2'},
-      {'job': jobs[4], 'status': 'accepted', 'id': 's3'},
-      {'job': jobs[1], 'status': 'pending', 'id': 's4'},
-      {'job': jobs[3], 'status': 'rejected', 'id': 's5'},
-    ];
-
-    int statusRank(String s) {
-      switch (s) {
-        case 'accepted':
-          return 0;
-        case 'pending':
-          return 1;
-        case 'rejected':
-        default:
-          return 2;
-      }
-    }
-
-    mockApps.sort((a, b) => statusRank(a['status']).compareTo(statusRank(b['status'])));
-    return mockApps.take(count).toList();
-  }
+  // Top Applications section removed.
 }
