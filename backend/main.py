@@ -8,11 +8,14 @@ from models.job import Job, JobResponse
 from scrapers.naukri_scraper import NaukriScraper
 from scrapers.remoteonly_scraper import RemoteOnlyScraper
 from utils.data_processor import DataProcessor
+from motor.motor_asyncio import AsyncIOMotorClient
+from routes.auth import router as auth_router
+import os
 
 app = FastAPI(
     title="JobScraper API",
-    description="API for scraping job data from Naukri and RemoteOnly",
-    version="1.0.0"
+    description="API for scraping job data from Naukri and RemoteOnly + Auth",
+    version="1.1.0"
 )
 
 app.add_middleware(
@@ -27,6 +30,25 @@ app.add_middleware(
 naukri_scraper = NaukriScraper()
 remoteonly_scraper = RemoteOnlyScraper()
 data_processor = DataProcessor()
+app.include_router(auth_router)
+
+@app.on_event("startup")
+async def startup_event():
+    mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    client = AsyncIOMotorClient(mongo_uri)
+    app.state.db = client[os.getenv("MONGO_DB_NAME", "jobr_db")]
+    # Create unique index on email for users
+    try:
+        await app.state.db.users.create_index("email", unique=True)
+    except Exception as e:
+        print(f"Index creation error: {e}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    db = getattr(app.state, 'db', None)
+    if db is not None:
+        client = db.client
+        client.close()
 
 @app.get("/")
 async def root():
