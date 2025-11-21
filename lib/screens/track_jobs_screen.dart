@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
 import 'package:swipe_app/widgets/compact_job_card.dart';
 import 'package:swipe_app/fake_data/jobs_data.dart';
+import 'package:swipe_app/widgets/bottom_navbar.dart';
 
 class TrackJobsScreen extends StatefulWidget {
   const TrackJobsScreen({super.key});
@@ -14,7 +15,8 @@ class TrackJobsScreen extends StatefulWidget {
 class _TrackJobsScreenState extends State<TrackJobsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+  int _navIndex = 2; // Track tab index
+
   // Sample application data with status (now mutable)
   List<Map<String, dynamic>> _applications = [
     {
@@ -76,20 +78,18 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
   // Function to update application status
   void _updateApplicationStatus(String applicationId, String newStatus) {
     setState(() {
-      final applicationIndex = _applications.indexWhere((app) => app['id'] == applicationId);
+      final applicationIndex = _applications.indexWhere(
+        (app) => app['id'] == applicationId,
+      );
       if (applicationIndex != -1) {
         _applications[applicationIndex]['status'] = newStatus;
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
-                Icon(
-                  _getStatusIcon(newStatus),
-                  color: Colors.white,
-                  size: 20,
-                ),
+                Icon(_getStatusIcon(newStatus), color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Text('Status updated to ${newStatus.toUpperCase()}'),
               ],
@@ -165,18 +165,10 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                 fontWeight: FontWeight.w400,
               ),
               tabs: [
-                Tab(
-                  text: 'All (${_applications.length})',
-                ),
-                Tab(
-                  text: 'Pending (${_getPendingCount()})',
-                ),
-                Tab(
-                  text: 'Accepted (${_getAcceptedCount()})',
-                ),
-                Tab(
-                  text: 'Rejected (${_getRejectedCount()})',
-                ),
+                Tab(text: 'All (${_applications.length})'),
+                Tab(text: 'Pending (${_getPendingCount()})'),
+                Tab(text: 'Accepted (${_getAcceptedCount()})'),
+                Tab(text: 'Rejected (${_getRejectedCount()})'),
               ],
             ),
           ),
@@ -184,7 +176,7 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
             children: [
               // Stats Overview
               _buildStatsOverview(themeProvider),
-              
+
               // Tab Content
               Expanded(
                 child: TabBarView(
@@ -192,21 +184,35 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                   children: [
                     _buildApplicationsList(_applications, themeProvider),
                     _buildApplicationsList(
-                      _applications.where((app) => app['status'] == 'pending').toList(),
+                      _applications
+                          .where((app) => app['status'] == 'pending')
+                          .toList(),
                       themeProvider,
                     ),
                     _buildApplicationsList(
-                      _applications.where((app) => app['status'] == 'accepted').toList(),
+                      _applications
+                          .where((app) => app['status'] == 'accepted')
+                          .toList(),
                       themeProvider,
                     ),
                     _buildApplicationsList(
-                      _applications.where((app) => app['status'] == 'rejected').toList(),
+                      _applications
+                          .where((app) => app['status'] == 'rejected')
+                          .toList(),
                       themeProvider,
                     ),
                   ],
                 ),
               ),
             ],
+          ),
+          bottomNavigationBar: BottomNavBar(
+            currentIndex: _navIndex,
+            onTap: (index) {
+              if (index != _navIndex) {
+                Navigator.pop(context);
+              }
+            },
           ),
         );
       },
@@ -240,27 +246,19 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
               themeProvider,
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: themeProvider.borderColor,
-          ),
+          Container(width: 1, height: 40, color: themeProvider.borderColor),
           Expanded(
             child: _buildStatItem(
               'Success Rate',
-              _applications.isNotEmpty 
-                ? '${((_getAcceptedCount() / _applications.length) * 100).toInt()}%'
-                : '0%',
+              _applications.isNotEmpty
+                  ? '${((_getAcceptedCount() / _applications.length) * 100).toInt()}%'
+                  : '0%',
               Icons.trending_up,
               const Color(0xFF10B981),
               themeProvider,
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: themeProvider.borderColor,
-          ),
+          Container(width: 1, height: 40, color: themeProvider.borderColor),
           Expanded(
             child: _buildStatItem(
               'Pending',
@@ -275,7 +273,13 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color, ThemeProvider themeProvider) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+    ThemeProvider themeProvider,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -300,7 +304,10 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     );
   }
 
-  Widget _buildApplicationsList(List<Map<String, dynamic>> applications, ThemeProvider themeProvider) {
+  Widget _buildApplicationsList(
+    List<Map<String, dynamic>> applications,
+    ThemeProvider themeProvider,
+  ) {
     if (applications.isEmpty) {
       return Center(
         child: Column(
@@ -353,7 +360,10 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     );
   }
 
-  void _showApplicationDetails(Map<String, dynamic> application, ThemeProvider themeProvider) {
+  void _showApplicationDetails(
+    Map<String, dynamic> application,
+    ThemeProvider themeProvider,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -397,7 +407,9 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                       status: application['status'],
                       onStatusChanged: (newStatus) {
                         _updateApplicationStatus(application['id'], newStatus);
-                        Navigator.pop(context); // Close the modal after status change
+                        Navigator.pop(
+                          context,
+                        ); // Close the modal after status change
                       },
                     ),
                     const SizedBox(height: 20),
@@ -410,13 +422,33 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTimelineItem('Applied', application['appliedDate'], true, themeProvider),
+                    _buildTimelineItem(
+                      'Applied',
+                      application['appliedDate'],
+                      true,
+                      themeProvider,
+                    ),
                     if (application['status'] == 'accepted')
-                      _buildTimelineItem('Accepted', '1 day ago', true, themeProvider),
+                      _buildTimelineItem(
+                        'Accepted',
+                        '1 day ago',
+                        true,
+                        themeProvider,
+                      ),
                     if (application['status'] == 'rejected')
-                      _buildTimelineItem('Rejected', '1 day ago', true, themeProvider),
+                      _buildTimelineItem(
+                        'Rejected',
+                        '1 day ago',
+                        true,
+                        themeProvider,
+                      ),
                     if (application['status'] == 'pending')
-                      _buildTimelineItem('Under Review', 'Pending', false, themeProvider),
+                      _buildTimelineItem(
+                        'Under Review',
+                        'Pending',
+                        false,
+                        themeProvider,
+                      ),
                   ],
                 ),
               ),
@@ -427,7 +459,12 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     );
   }
 
-  Widget _buildTimelineItem(String title, String time, bool isCompleted, ThemeProvider themeProvider) {
+  Widget _buildTimelineItem(
+    String title,
+    String time,
+    bool isCompleted,
+    ThemeProvider themeProvider,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -436,7 +473,9 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
             width: 20,
             height: 20,
             decoration: BoxDecoration(
-              color: isCompleted ? const Color(0xFF10B981) : themeProvider.secondaryTextColor,
+              color: isCompleted
+                  ? const Color(0xFF10B981)
+                  : themeProvider.secondaryTextColor,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -496,17 +535,26 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.date_range, color: Color(0xFF6366F1)),
-              title: Text('By Date', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'By Date',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.business, color: Color(0xFF6366F1)),
-              title: Text('By Company', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'By Company',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
               leading: const Icon(Icons.work, color: Color(0xFF6366F1)),
-              title: Text('By Job Type', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'By Job Type',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               onTap: () => Navigator.pop(context),
             ),
           ],
@@ -540,8 +588,10 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     }
   }
 
-  int _getPendingCount() => _applications.where((app) => app['status'] == 'pending').length;
-  int _getAcceptedCount() => _applications.where((app) => app['status'] == 'accepted').length;
-  int _getRejectedCount() => _applications.where((app) => app['status'] == 'rejected').length;
+  int _getPendingCount() =>
+      _applications.where((app) => app['status'] == 'pending').length;
+  int _getAcceptedCount() =>
+      _applications.where((app) => app['status'] == 'accepted').length;
+  int _getRejectedCount() =>
+      _applications.where((app) => app['status'] == 'rejected').length;
 }
-

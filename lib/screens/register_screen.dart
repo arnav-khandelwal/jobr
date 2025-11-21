@@ -34,7 +34,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to the terms and conditions'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Please agree to the terms and conditions'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -43,14 +46,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await AuthService.instance.signup(
         _emailController.text.trim(),
         _passwordController.text,
-        _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
+        _nameController.text.trim().isEmpty
+            ? null
+            : _nameController.text.trim(),
       );
       // Auto sign-in after signup
-      await AuthService.instance.signin(_emailController.text.trim(), _passwordController.text);
+      await AuthService.instance.signin(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
       await AuthService.instance.me();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Account created!'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pushReplacement(
           context,
@@ -66,7 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Signup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

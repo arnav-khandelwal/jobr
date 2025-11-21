@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/register_screen.dart';
 import 'package:swipe_app/screens/home_screen.dart';
 import 'package:swipe_app/services/auth_service.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -27,7 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      await AuthService.instance.signin(_emailController.text.trim(), _passwordController.text);
+      await AuthService.instance.signin(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
       // Optional: fetch profile to validate
       await AuthService.instance.me();
       if (mounted) {
@@ -45,7 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Login failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

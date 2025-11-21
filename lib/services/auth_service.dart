@@ -36,7 +36,11 @@ class AuthService {
     }
   }
 
-  Future<UserPublic> signup(String email, String password, String? fullName) async {
+  Future<UserPublic> signup(
+    String email,
+    String password,
+    String? fullName,
+  ) async {
     final uri = Uri.parse('$_baseUrl/api/auth/signup');
     final response = await http.post(
       uri,
@@ -62,9 +66,10 @@ class AuthService {
     final token = prefs.getString('auth_token');
     if (token == null) return null;
     final uri = Uri.parse('$_baseUrl/api/auth/me');
-    final response = await http.get(uri, headers: {
-      'Authorization': 'Bearer $token',
-    });
+    final response = await http.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
       return UserPublic.fromJson(data);

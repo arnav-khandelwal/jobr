@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
+import 'package:swipe_app/widgets/bottom_navbar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,6 +14,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _emailNotifications = true;
   bool _pushNotifications = true;
+  int _navIndex = 4; // Settings tab index
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios, color: themeProvider.primaryTextColor),
+              icon: Icon(
+                Icons.arrow_back_ios,
+                color: themeProvider.primaryTextColor,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -71,6 +76,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildAboutSection(themeProvider),
               ],
             ),
+          ),
+          bottomNavigationBar: BottomNavBar(
+            currentIndex: _navIndex,
+            onTap: (index) {
+              if (index != _navIndex) {
+                Navigator.pop(context);
+              }
+            },
           ),
         );
       },
@@ -119,7 +132,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'john.doe@example.com',
-                  style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: themeProvider.secondaryTextColor,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -324,10 +340,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
+          style: TextStyle(
+            fontSize: 14,
+            color: themeProvider.secondaryTextColor,
+          ),
         ),
         trailing: Icon(
-          Icons.chevron_right, 
+          Icons.chevron_right,
           color: themeProvider.secondaryTextColor,
         ),
         onTap: onTap,
@@ -370,7 +389,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 14, color: themeProvider.secondaryTextColor),
+          style: TextStyle(
+            fontSize: 14,
+            color: themeProvider.secondaryTextColor,
+          ),
         ),
         trailing: Switch(
           value: value,
@@ -403,16 +425,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 20),
             ListTile(
-              title: Text('English', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'English',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               trailing: const Icon(Icons.check, color: Color(0xFF6366F1)),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              title: Text('Spanish', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'Spanish',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              title: Text('French', style: TextStyle(color: themeProvider.primaryTextColor)),
+              title: Text(
+                'French',
+                style: TextStyle(color: themeProvider.primaryTextColor),
+              ),
               onTap: () => Navigator.pop(context),
             ),
           ],
@@ -426,7 +457,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: themeProvider.cardColor,
-        title: Text('Clear Cache', style: TextStyle(color: themeProvider.primaryTextColor)),
+        title: Text(
+          'Clear Cache',
+          style: TextStyle(color: themeProvider.primaryTextColor),
+        ),
         content: Text(
           'Are you sure you want to clear the app cache?',
           style: TextStyle(color: themeProvider.secondaryTextColor),
@@ -434,7 +468,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: themeProvider.primaryTextColor)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: themeProvider.primaryTextColor),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -458,7 +495,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: themeProvider.cardColor,
-        title: Text('Sign Out', style: TextStyle(color: themeProvider.primaryTextColor)),
+        title: Text(
+          'Sign Out',
+          style: TextStyle(color: themeProvider.primaryTextColor),
+        ),
         content: Text(
           'Are you sure you want to sign out?',
           style: TextStyle(color: themeProvider.secondaryTextColor),
@@ -466,7 +506,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: themeProvider.primaryTextColor)),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: themeProvider.primaryTextColor),
+            ),
           ),
           ElevatedButton(
             onPressed: () {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:swipe_app/screens/settings_screen.dart';
-import 'package:swipe_app/screens/preferences_screen.dart';
+import 'package:swipe_app/screens/resume_upload_page.dart';
 import 'package:swipe_app/screens/track_jobs_screen.dart';
 import 'package:swipe_app/screens/stand_outs_screen.dart';
+
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -34,14 +35,15 @@ class BottomNavBar extends StatelessWidget {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const StandOutsScreen()),
             );
-          } else if (index == 2) { // Track index shifted to 2
+          } else if (index == 2) {
+            // Track index shifted to 2
             Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const TrackJobsScreen()),
             );
           } else if (index == 3) {
-            // Navigate to preferences screen
+            // Navigate to Resume Upload page
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const PreferencesScreen()),
+              MaterialPageRoute(builder: (context) => const ResumeUploadPage()),
             );
           } else if (index == 4) {
             // Navigate to settings screen
@@ -66,8 +68,8 @@ class BottomNavBar extends StatelessWidget {
             label: 'Track',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.tune),
-            label: 'Preferences',
+            icon: Icon(Icons.upload_file),
+            label: 'Resume',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

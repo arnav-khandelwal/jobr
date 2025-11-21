@@ -18,3 +18,5 @@ passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 email-validator==2.1.0.post1
 argon2-cffi==23.1.0
+pypdf==3.17.1
+spacy==3.7.2

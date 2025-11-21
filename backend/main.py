@@ -10,6 +10,7 @@ from scrapers.remoteonly_scraper import RemoteOnlyScraper
 from utils.data_processor import DataProcessor
 from motor.motor_asyncio import AsyncIOMotorClient
 from routes.auth import router as auth_router
+from routes.parse_resume import router as parse_router
 import os
 
 app = FastAPI(
@@ -31,6 +32,7 @@ naukri_scraper = NaukriScraper()
 remoteonly_scraper = RemoteOnlyScraper()
 data_processor = DataProcessor()
 app.include_router(auth_router)
+app.include_router(parse_router)
 
 @app.on_event("startup")
 async def startup_event():

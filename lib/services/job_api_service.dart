@@ -1,10 +1,15 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:swipe_app/fake_data/jobs_data.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 
 class JobApiService {
-  static const String baseUrl =
-      'http://192.168.1.3:8000'; // Change for production
+  static String get baseUrl {
+    // Android emulator needs 10.0.2.2 to reach host machine.
+    if (!kIsWeb && Platform.isAndroid) return 'http://10.0.2.2:8000';
+    return 'http://localhost:8000';
+  }
 
   static Future<List<Job>> fetchJobsFromAPI({
     String searchTerm = 'software developer',

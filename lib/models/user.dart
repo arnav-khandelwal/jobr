@@ -1,11 +1,15 @@
-
 class UserPublic {
   final String id;
   final String email;
   final String? fullName;
   final DateTime createdAt;
 
-  UserPublic({required this.id, required this.email, this.fullName, required this.createdAt});
+  UserPublic({
+    required this.id,
+    required this.email,
+    this.fullName,
+    required this.createdAt,
+  });
 
   factory UserPublic.fromJson(Map<String, dynamic> json) {
     return UserPublic(
