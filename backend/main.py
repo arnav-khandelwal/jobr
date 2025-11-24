@@ -10,6 +10,7 @@ from models.job import Job, JobResponse
 from scrapers.naukri_scraper import NaukriScraper
 from scrapers.remoteonly_scraper import RemoteOnlyScraper
 from scrapers.placementindia_scraper import PlacementIndiaScraper
+from scrapers.shine_scraper import ShineScraper
 from utils.data_processor import DataProcessor
 from motor.motor_asyncio import AsyncIOMotorClient
 from routes.auth import router as auth_router
@@ -44,6 +45,7 @@ app.add_middleware(
 naukri_scraper = NaukriScraper()
 remoteonly_scraper = RemoteOnlyScraper()
 placementindia_scraper = PlacementIndiaScraper()
+shine_scraper = ShineScraper()
 data_processor = DataProcessor()
 app.include_router(auth_router)
 app.include_router(parse_router)
@@ -107,6 +109,15 @@ async def get_jobs(
             print(f"Error with PlacementIndia scraper: {e}")
             source_breakdown["placementindia"] = 0
 
+        # Use Shine scraper (homepage domain carousels)
+        try:
+            shine_jobs = shine_scraper.scrape_jobs(search_term=search_term, location=location, pages=1)
+            all_jobs.extend(shine_jobs)
+            source_breakdown["shine"] = len(shine_jobs)
+        except Exception as e:
+            print(f"Error with Shine scraper: {e}")
+            source_breakdown["shine"] = 0
+
         # Remove duplicates
         unique_jobs = data_processor.remove_duplicates(all_jobs)
 
@@ -128,7 +139,8 @@ async def health_check():
         "scrapers": {
             "naukri": "active",
             "remoteonly": "active",
-            "placementindia": "active"
+            "placementindia": "active",
+            "shine": "active"
         }
     }
 
