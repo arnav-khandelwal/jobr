@@ -20,6 +20,11 @@ def get_db(request: Request) -> AsyncIOMotorDatabase:
 
 @router.post("/signup", response_model=UserPublic, status_code=201)
 async def signup(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_db)):
+    # Debug (non-sensitive): log lengths & email pattern when validation passed
+    try:
+        print(f"[signup] email={user.email} password_len={len(user.password)} full_name_present={bool(user.full_name)}")
+    except Exception:
+        pass
     existing = await db.users.find_one({"email": user.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")

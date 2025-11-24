@@ -18,6 +18,7 @@ class _ResumeUploadPageState extends State<ResumeUploadPage> {
   Map<String, dynamic>? _parsed;
   String? _error;
   int _navIndex = 3; // Resume tab index
+  bool _snippetExpanded = false; // controls expansion of raw snippet
 
   Future<void> _pickFile() async {
     setState(() {
@@ -368,119 +369,261 @@ class _ResumeUploadPageState extends State<ResumeUploadPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
-                        // Grid layout for better space utilization
-                        GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 2.5,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final double maxWidth = constraints.maxWidth;
+                            final bool twoColumns = maxWidth > 600; // adaptive
+                            final List<String> orderedKeys = [
+                              'name',
+                              'email',
+                              'phone',
+                              'skills',
+                              'education',
+                              'experience',
+                              ..._parsed!.keys.where(
+                                (k) => ![
+                                  'name',
+                                  'email',
+                                  'phone',
+                                  'skills',
+                                  'education',
+                                  'experience',
+                                  'raw_text_snippet',
+                                ].contains(k),
                               ),
-                          itemCount: _parsed!.length,
-                          itemBuilder: (context, index) {
-                            final key = _parsed!.keys.elementAt(index);
-                            final value = _parsed![key];
+                            ];
 
-                            // Skip raw_text_snippet from grid, show separately
-                            if (key == 'raw_text_snippet')
-                              return const SizedBox.shrink();
-
-                            return Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                border: Border.all(
-                                  color: const Color(0xFFE2E8F0),
+                            List<Widget> tiles = [];
+                            for (final key in orderedKeys) {
+                              if (!_parsed!.containsKey(key)) continue;
+                              if (key == 'raw_text_snippet') continue;
+                              final value = _parsed![key];
+                              Widget content;
+                              if (key == 'skills' && value is List) {
+                                content = Wrap(
+                                  spacing: 6,
+                                  runSpacing: -4,
+                                  children: value
+                                      .take(20)
+                                      .map<Widget>(
+                                        (s) => Chip(
+                                          label: Text(
+                                            s.toString(),
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                          backgroundColor: const Color(
+                                            0xFFEFF6FF,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFBFDBFE),
+                                          ),
+                                          materialTapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                      )
+                                      .toList(),
+                                );
+                              } else if ((key == 'education' ||
+                                      key == 'experience') &&
+                                  value is List) {
+                                final list = value
+                                    .where(
+                                      (l) => l.toString().trim().isNotEmpty,
+                                    )
+                                    .take(12)
+                                    .toList();
+                                content = Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: list
+                                      .map(
+                                        (l) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 4,
+                                          ),
+                                          child: Text(
+                                            '• ${l.toString()}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF1E293B),
+                                              height: 1.3,
+                                            ),
+                                            softWrap: true,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                );
+                              } else {
+                                content = Text(
+                                  value == null ||
+                                          (value is String &&
+                                              value.trim().isEmpty)
+                                      ? 'Not found'
+                                      : value is List
+                                      ? value.join(', ')
+                                      : value.toString(),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color:
+                                        value == null ||
+                                            (value is String &&
+                                                value.trim().isEmpty)
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF1E293B),
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.25,
+                                  ),
+                                );
+                              }
+                              tiles.add(
+                                Container(
+                                  width: twoColumns
+                                      ? (maxWidth - 12) / 2
+                                      : maxWidth,
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        key.replaceAll('_', ' ').toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF64748B),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      content,
+                                    ],
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    key.replaceAll('_', ' ').toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    value == null ||
-                                            (value is String && value.isEmpty)
-                                        ? 'Not found'
-                                        : value is List
-                                        ? value.join(', ')
-                                        : value.toString(),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color:
-                                          value == null ||
-                                              (value is String && value.isEmpty)
-                                          ? const Color(0xFF94A3B8)
-                                          : const Color(0xFF1E293B),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
+                              );
+                            }
+                            return Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: tiles,
                             );
                           },
                         ),
-
-                        // Show text snippet separately if exists
+                        const SizedBox(height: 20),
                         if (_parsed!.containsKey('raw_text_snippet') &&
                             _parsed!['raw_text_snippet'] != null &&
                             _parsed!['raw_text_snippet']
                                 .toString()
-                                .isNotEmpty) ...[
-                          const SizedBox(height: 16),
+                                .trim()
+                                .isNotEmpty)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
                               border: Border.all(
                                 color: const Color(0xFFE2E8F0),
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'PREVIEW',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
-                                    letterSpacing: 0.5,
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    12,
+                                    12,
+                                    0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text(
+                                          'RAW TEXT PREVIEW',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF64748B),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () => setState(() {
+                                          _snippetExpanded = !_snippetExpanded;
+                                        }),
+                                        icon: Icon(
+                                          _snippetExpanded
+                                              ? Icons.expand_less
+                                              : Icons.expand_more,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          _snippetExpanded
+                                              ? 'Collapse'
+                                              : 'Expand',
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _parsed!['raw_text_snippet'].toString(),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF1E293B),
-                                    height: 1.4,
+                                AnimatedCrossFade(
+                                  firstChild: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      4,
+                                      12,
+                                      12,
+                                    ),
+                                    child: Text(
+                                      _parsed!['raw_text_snippet']
+                                          .toString()
+                                          .replaceAll('\r', ''),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF1E293B),
+                                        height: 1.35,
+                                      ),
+                                      maxLines: 6,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  maxLines: 4,
-                                  overflow: TextOverflow.ellipsis,
+                                  secondChild: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      4,
+                                      12,
+                                      12,
+                                    ),
+                                    child: SelectableText(
+                                      _parsed!['raw_text_snippet']
+                                          .toString()
+                                          .replaceAll('\r', ''),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF1E293B),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                  crossFadeState: _snippetExpanded
+                                      ? CrossFadeState.showSecond
+                                      : CrossFadeState.showFirst,
+                                  duration: const Duration(milliseconds: 250),
                                 ),
                               ],
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ),

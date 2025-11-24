@@ -5,8 +5,15 @@ from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=6, description="User password (min 6 chars)")
     full_name: Optional[str] = None
+
+    # Normalize/strip whitespace
+    def model_validate(self, *args, **kwargs):  # type: ignore
+        m = super().model_validate(*args, **kwargs)  # pydantic v2 override
+        if hasattr(m, 'full_name') and isinstance(m.full_name, str):
+            m.full_name = m.full_name.strip() or m.full_name
+        return m
 
 
 class UserInDB(BaseModel):

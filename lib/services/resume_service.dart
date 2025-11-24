@@ -13,7 +13,7 @@ class ResumeService {
     return 'http://localhost:8000';
   }
 
-  Uri get _parseUri => Uri.parse('$_baseUrl/parse-resume');
+  Uri get _parseUri => Uri.parse('$_baseUrl/api/parse-resume');
 
   /// Uploads a resume PDF (File on mobile/desktop, bytes on web) and returns parsed JSON map.
   Future<Map<String, dynamic>> parseResume({

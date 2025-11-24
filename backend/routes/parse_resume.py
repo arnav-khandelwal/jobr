@@ -1,8 +1,12 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from typing import List, Optional
+from typing import List, Optional, Dict
 import re
 from io import BytesIO
 import threading
+import tempfile
+import subprocess
+import shutil
+import os
 
 # Lazy-loaded NLP model (spaCy) to avoid startup cost; thread-safe init
 _nlp = None
@@ -80,6 +84,70 @@ def _extract_name(text: str) -> Optional[str]:
     return None
 
 
+def _extract_sections(text: str) -> Dict[str, List[str]]:
+    """Heuristically extract Education and Experience sections.
+    Looks for heading lines (case-insensitive) and captures subsequent non-empty lines
+    until a blank line followed by another heading or until a size cap.
+    """
+    lines = [l.rstrip() for l in text.splitlines()]
+    headings_experience = {
+        "professional experience",
+        "experience",
+        "work experience",
+        "employment history",
+    }
+    headings_education = {"education", "academic", "academics"}
+    # Unified heading detection set
+    all_headings = headings_experience | headings_education | {
+        "skills",
+        "projects",
+        "summary",
+        "certifications",
+        "languages",
+    }
+
+    def normalize(line: str) -> str:
+        return re.sub(r"[^a-zA-Z ]", "", line).strip().lower()
+
+    sections: Dict[str, List[str]] = {"education": [], "experience": []}
+    current = None
+    buffer: List[str] = []
+
+    def commit():
+        nonlocal buffer, current
+        if current == "education" and buffer:
+            sections["education"] = buffer[:20]
+        elif current == "experience" and buffer:
+            sections["experience"] = buffer[:30]
+        buffer = []
+
+    for raw in lines:
+        norm = normalize(raw)
+        if norm in all_headings:
+            # New heading encountered – commit previous
+            commit()
+            if norm in headings_education:
+                current = "education"
+            elif norm in headings_experience:
+                current = "experience"
+            else:
+                current = None
+            continue
+        # Capture lines if inside target section
+        if current in {"education", "experience"}:
+            if not raw.strip():
+                # blank line – may indicate end of section; commit and reset
+                commit()
+                current = None
+            else:
+                cleaned = raw.strip()
+                cleaned = re.sub(r"^[•\-\*\u2022]+\s*", "", cleaned)
+                buffer.append(cleaned)
+    # Final commit
+    commit()
+    return sections
+
+
 @router.post("/parse-resume")
 async def parse_resume(file: UploadFile = File(...)):
     if not file.filename:
@@ -89,41 +157,43 @@ async def parse_resume(file: UploadFile = File(...)):
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
-    text = None
+    text = None  # <-- IMPORTANT: do NOT try utf-8 decode
 
-    # Quick attempt: try to decode bytes to text
-    try:
-        text = content.decode("utf-8", errors="ignore")
-    except Exception:
-        text = None
-
-    # If decode didn't yield useful text, try extracting from PDF if PyPDF2/pypdf available
-    if not text or len(text.strip()) < 20:
+    # Always use pdftotext first
+    if shutil.which("pdftotext"):
+        tmp_path = None
         try:
-            # import locally to avoid hard dependency at top-level
-            try:
-                from pypdf import PdfReader as _PdfReader
-            except Exception:
-                from PyPDF2 import PdfReader as _PdfReader  # type: ignore
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmpf:
+                tmpf.write(content)
+                tmpf.flush()
+                tmp_path = tmpf.name
 
-            reader = _PdfReader(BytesIO(content))
-            pages_text = []
-            for p in reader.pages:
+            cmds = [
+                ["pdftotext", "-enc", "UTF-8", tmp_path, "-"],
+                ["pdftotext", tmp_path, "-"],
+            ]
+
+            for cmd in cmds:
                 try:
-                    pages_text.append(p.extract_text() or "")
-                except Exception:
-                    # older PyPDF2 page structure
-                    try:
-                        pages_text.append(p.get_text() or "")
-                    except Exception:
-                        pages_text.append("")
-            text = "\n".join(pages_text)
-        except Exception:
-            # final fallback: try latin1 decode
-            try:
-                text = content.decode("latin1", errors="ignore")
-            except Exception:
-                text = ""
+                    res = subprocess.run(
+                        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20
+                    )
+                    if res.returncode == 0 and res.stdout:
+                        text = res.stdout.decode("utf-8", errors="ignore")
+                        break
+                except:
+                    continue
+
+        finally:
+            if tmp_path:
+                try:
+                    os.remove(tmp_path)
+                except:
+                    pass
+
+    # If STILL nothing (rare), fallback
+    if not text or len(text.strip()) < 20:
+        raise HTTPException(400, "Failed to extract text")
 
     # Basic parsing heuristics
     email = _extract_email(text or "")
@@ -147,6 +217,8 @@ async def parse_resume(file: UploadFile = File(...)):
     ]
     skills = _find_skills(text or "", keywords)
 
+    sections = _extract_sections(text or "")
+
     result = {
         "filename": file.filename,
         "size": len(content),
@@ -154,6 +226,8 @@ async def parse_resume(file: UploadFile = File(...)):
         "phone": phone,
         "name": name,
         "skills": skills,
+        "education": sections.get("education", []),
+        "experience": sections.get("experience", []),
         "raw_text_snippet": (text or "")[:1000],
     }
 

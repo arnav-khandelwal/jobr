@@ -1,5 +1,7 @@
 # backend/main.py
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from datetime import datetime
@@ -7,6 +9,7 @@ from datetime import datetime
 from models.job import Job, JobResponse
 from scrapers.naukri_scraper import NaukriScraper
 from scrapers.remoteonly_scraper import RemoteOnlyScraper
+from scrapers.placementindia_scraper import PlacementIndiaScraper
 from utils.data_processor import DataProcessor
 from motor.motor_asyncio import AsyncIOMotorClient
 from routes.auth import router as auth_router
@@ -19,6 +22,16 @@ app = FastAPI(
     version="1.1.0"
 )
 
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    # Return a concise, developer-friendly validation error response
+    try:
+        errors = exc.errors()
+    except Exception:
+        errors = str(exc)
+    return JSONResponse(status_code=422, content={"detail": errors})
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,6 +43,7 @@ app.add_middleware(
 # Initialize scraper and processor
 naukri_scraper = NaukriScraper()
 remoteonly_scraper = RemoteOnlyScraper()
+placementindia_scraper = PlacementIndiaScraper()
 data_processor = DataProcessor()
 app.include_router(auth_router)
 app.include_router(parse_router)
@@ -84,6 +98,15 @@ async def get_jobs(
             print(f"Error with RemoteOnly scraper: {e}")
             source_breakdown["remoteonly"] = 0
 
+        # Use PlacementIndia scraper (lightweight requests-based)
+        try:
+            pi_jobs = placementindia_scraper.scrape_jobs(search_term=search_term, location=location, pages=1)
+            all_jobs.extend(pi_jobs)
+            source_breakdown["placementindia"] = len(pi_jobs)
+        except Exception as e:
+            print(f"Error with PlacementIndia scraper: {e}")
+            source_breakdown["placementindia"] = 0
+
         # Remove duplicates
         unique_jobs = data_processor.remove_duplicates(all_jobs)
 
@@ -104,7 +127,8 @@ async def health_check():
         "timestamp": datetime.now(),
         "scrapers": {
             "naukri": "active",
-            "remoteonly": "active"
+            "remoteonly": "active",
+            "placementindia": "active"
         }
     }
 
