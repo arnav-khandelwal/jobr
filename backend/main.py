@@ -15,7 +15,12 @@ from utils.data_processor import DataProcessor
 from motor.motor_asyncio import AsyncIOMotorClient
 from routes.auth import router as auth_router
 from routes.parse_resume import router as parse_router
+from routes.recommendations import router as recommend_router
 import os
+from dotenv import load_dotenv
+
+# Load .env early so environment variables (e.g., GEMINI_API_KEY) are available
+load_dotenv()
 
 app = FastAPI(
     title="JobScraper API",
@@ -49,6 +54,7 @@ shine_scraper = ShineScraper()
 data_processor = DataProcessor()
 app.include_router(auth_router)
 app.include_router(parse_router)
+app.include_router(recommend_router)
 
 @app.on_event("startup")
 async def startup_event():

@@ -2,7 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Request
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import Form
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from models.user import UserCreate, UserPublic, Token, user_in_db_to_public
@@ -43,9 +43,13 @@ async def signup(user: UserCreate, db: AsyncIOMotorDatabase = Depends(get_db)):
 
 
 @router.post("/signin", response_model=Token)
-async def signin(form: OAuth2PasswordRequestForm = Depends(), db: AsyncIOMotorDatabase = Depends(get_db)):
-    user = await db.users.find_one({"email": form.username})
-    if not user or not verify_password(form.password, user.get("password_hash", "")):
+async def signin(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    user = await db.users.find_one({"email": username})
+    if not user or not verify_password(password, user.get("password_hash", "")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token(str(user["_id"]))
     return Token(access_token=token)

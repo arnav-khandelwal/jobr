@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:swipe_app/services/resume_service.dart';
+import 'package:swipe_app/services/resume_cache_service.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
 
 class ResumeUploadPage extends StatefulWidget {
@@ -70,6 +71,8 @@ class _ResumeUploadPageState extends State<ResumeUploadPage> {
         );
       }
       setState(() => _parsed = parsed);
+      // Persist parsed resume locally for recommendations
+      await ResumeCacheService.saveResumeData(parsed);
     } on ResumeException catch (e) {
       setState(() => _error = e.message);
     } catch (e) {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_app/fake_data/jobs_data.dart';
 import 'package:swipe_app/services/job_cache_service.dart';
+import 'package:swipe_app/services/resume_cache_service.dart';
+import 'package:swipe_app/services/recommendations_service.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
 import 'package:swipe_app/widgets/detailed_job_card.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
@@ -15,10 +17,13 @@ class StandOutsScreen extends StatefulWidget {
 
 class _StandOutsScreenState extends State<StandOutsScreen> {
   List<Job> _topJobs = const [];
+  List<Job> _recommended = const [];
   bool _loading = true;
   int _navIndex = 1; // Stand Outs tab index in BottomNavBar
   int _currentJobIndex = 0;
   final Set<String> _appliedJobIds = {};
+  bool _aiTried = false;
+  bool _aiFailed = false;
 
   @override
   void initState() {
@@ -27,12 +32,28 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
   }
 
   Future<void> _initStandouts() async {
-    // Load from async storage; show top 3 based on heuristic
-    final cached = await JobCacheService.loadJobs();
-    final top = _selectTopJobs(cached, 3);
+    final cachedJobs = await JobCacheService.loadJobs();
+    final resume = await ResumeCacheService.loadResumeData();
+    List<Job> heuristic = _selectTopJobs(cachedJobs, 5);
+    List<Job> recommended = [];
+    if (resume.isNotEmpty && cachedJobs.isNotEmpty) {
+      try {
+        // Pass cached resume and jobs explicitly to the recommendations service
+        recommended = await RecommendationsService.instance
+            .fetchRecommendedJobs(resume: resume, jobs: cachedJobs);
+        _aiTried = true;
+        if (recommended.isEmpty) {
+          _aiFailed = true;
+        }
+      } catch (_) {
+        _aiTried = true;
+        _aiFailed = true;
+      }
+    }
     if (!mounted) return;
     setState(() {
-      _topJobs = top;
+      _recommended = recommended.isNotEmpty ? recommended : heuristic;
+      _topJobs = _recommended; // unify usage
       _currentJobIndex = 0;
       _loading = false;
     });
@@ -55,6 +76,23 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                 color: themeProvider.primaryTextColor,
               ),
             ),
+            actions: [
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else
+                IconButton(
+                  tooltip: 'Refresh recommendations',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _refreshRecommendations,
+                ),
+            ],
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 24),
@@ -68,7 +106,9 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Top Jobs for You',
+                        _aiTried && !_aiFailed
+                            ? 'AI Recommended Jobs'
+                            : 'Top Jobs for You',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -99,6 +139,32 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                           Text('Loading your stand-out jobs...'),
                         ],
                       ),
+                    ),
+                  ),
+                ] else if (_aiFailed && _aiTried) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.orange.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'AI recommendation unavailable. Showing heuristic picks.',
+                            style: TextStyle(
+                              color: themeProvider.secondaryTextColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ] else if (_currentJobIndex < _topJobs.length &&
@@ -150,6 +216,14 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
+                if (!_loading && _topJobs.isNotEmpty)
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: _refreshRecommendations,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh Top 5'),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -172,7 +246,7 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
     );
   }
 
-  // Simple heuristic to pick top jobs
+  // Simple heuristic (fallback when AI fails / not available)
   List<Job> _selectTopJobs(List<Job> jobs, int count) {
     const preferredSkills = {'Flutter', 'Dart', 'Python', 'AWS'};
 
@@ -187,6 +261,18 @@ class _StandOutsScreenState extends State<StandOutsScreen> {
     }).toList()..sort((a, b) => b.score.compareTo(a.score));
 
     return scored.take(count).map((e) => e.job).toList();
+  }
+
+  Future<void> _refreshRecommendations() async {
+    setState(() {
+      _loading = true;
+      _aiTried = false;
+      _aiFailed = false;
+      _recommended = const [];
+      _topJobs = const [];
+      _currentJobIndex = 0;
+    });
+    await _initStandouts();
   }
 
   // Wrap a DetailedJobCard with horizontal swipe handling
