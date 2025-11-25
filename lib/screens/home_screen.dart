@@ -8,6 +8,13 @@ import 'package:swipe_app/widgets/bottom_navbar.dart';
 import 'package:swipe_app/fake_data/jobs_data.dart';
 import 'package:swipe_app/services/job_api_service.dart';
 import 'package:swipe_app/services/job_cache_service.dart';
+import 'package:swipe_app/services/placementindia_apply_service.dart';
+
+class PlacementIndiaCreds {
+  final String email;
+  final String password;
+  PlacementIndiaCreds(this.email, this.password);
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,6 +51,86 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _initJobs();
+  }
+
+  // --- Helper methods for PlacementIndia apply flow ---
+  Future<PlacementIndiaCreds?> _promptPlacementIndiaCreds(Job job) async {
+    final emailController = TextEditingController();
+    final passController = TextEditingController();
+    return showDialog<PlacementIndiaCreds>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(
+            'Apply: ${job.jobTitle}',
+            overflow: TextOverflow.ellipsis,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Enter your PlacementIndia credentials'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Email ID / Mobile',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: passController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final email = emailController.text.trim();
+                final pwd = passController.text;
+                if (email.isEmpty || pwd.isEmpty) {
+                  // simple inline validation
+                  return;
+                }
+                Navigator.of(ctx).pop(PlacementIndiaCreds(email, pwd));
+              },
+              child: const Text('Apply'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showProcessingSnack(String msg) {
+    if (!_suppressSnackbars) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
+      );
+    }
+  }
+
+  void _showGreenSnack(String msg) {
+    if (!_suppressSnackbars) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.green),
+      );
+    }
+  }
+
+  void _showErrorSnack(String msg) {
+    if (!_suppressSnackbars) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   Future<void> _initJobs() async {
@@ -148,24 +235,54 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _onSwipeRight() {
+  Future<void> _onSwipeRight() async {
     // Suppress snackbars during automation to avoid spam
-    if (!_suppressSnackbars) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _jobs.isNotEmpty
-                ? 'Applied to ${_jobs[_currentJobIndex].jobTitle}!'
-                : 'Applied',
+    if (_jobs.isEmpty) return;
+    final job = _jobs[_currentJobIndex];
+
+    // If automation running, skip interactive apply flow.
+    if (_automationInProgress || job.source != 'PlacementIndia') {
+      if (!_suppressSnackbars) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _jobs.isNotEmpty ? 'Applied to ${job.jobTitle}!' : 'Applied',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(milliseconds: 400),
           ),
-          backgroundColor: Colors.green,
-          duration: const Duration(milliseconds: 400),
-        ),
+        );
+      }
+      setState(() {
+        _removeCurrentJobAndAdvance(applied: true);
+      });
+      return;
+    }
+
+    // PlacementIndia job: prompt for credentials, then call backend apply endpoint.
+    final creds = await _promptPlacementIndiaCreds(job);
+    if (creds == null) return; // user cancelled
+
+    _showProcessingSnack('Applying on PlacementIndia...');
+    final result = await PlacementIndiaApplyService.instance.applyJob(
+      jobUrl: job.applyLink,
+      email: creds.email,
+      password: creds.password,
+    );
+
+    if (result.success) {
+      _showGreenSnack('Applied to ${job.jobTitle} (PlacementIndia)');
+    } else {
+      _showErrorSnack(
+        result.message ?? 'Failed to apply (step: ${result.step})',
       );
     }
-    setState(() {
-      _removeCurrentJobAndAdvance(applied: true);
-    });
+
+    if (mounted) {
+      setState(() {
+        _removeCurrentJobAndAdvance(applied: result.success);
+      });
+    }
   }
 
   void _onSwipeLeft() {
@@ -445,11 +562,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     : _currentJobIndex < _jobs.length
                     ? GestureDetector(
-                        onPanEnd: (details) {
+                        onPanEnd: (details) async {
                           if (details.velocity.pixelsPerSecond.dx > 0) {
-                            _onSwipeRight();
+                            await _onSwipeRight();
                           } else if (details.velocity.pixelsPerSecond.dx < 0) {
-                            _onSwipeLeft(); // This is being triggered on tap
+                            _onSwipeLeft(); // left swipe stays sync
                           } else {
                             // No horizontal swipe detected
                           }
