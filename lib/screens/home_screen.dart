@@ -48,6 +48,29 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentJobIndex = 0; // still used to reference current card
   Set<String> _viewedJobIds = {};
 
+  // Compute visible jobs based on selected filter
+  List<Job> _filteredJobs() {
+    if (_selectedFilter == 0) return _jobs;
+    final f = _filters[_selectedFilter].toLowerCase();
+    return _jobs.where((job) {
+      switch (f) {
+        case 'remote':
+          final locRemote = job.location.toLowerCase().contains('remote');
+          return job.remoteFriendly || locRemote;
+        case 'full-time':
+          return job.jobType.toLowerCase() == 'full-time';
+        case 'part-time':
+          return job.jobType.toLowerCase() == 'part-time';
+        case 'internship':
+          return job.jobType.toLowerCase() == 'internship';
+        case 'freelance':
+          return job.jobType.toLowerCase() == 'freelance';
+        default:
+          return true;
+      }
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -222,24 +245,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _removeCurrentJobAndAdvance({required bool applied}) {
-    if (_jobs.isEmpty) return;
-    final job = _jobs[_currentJobIndex];
-    _viewedJobIds.add(job.jobId);
-    JobCacheService.addViewedJobId(job.jobId); // persist viewed
-
-    // Remove the job from list
-    _jobs.removeAt(_currentJobIndex);
-
-    if (_currentJobIndex >= _jobs.length) {
-      _currentJobIndex = 0; // reset index if beyond end
+  void _removeJobAndAdvance(String jobId, {required bool applied}) {
+    // Mark viewed & persist
+    _viewedJobIds.add(jobId);
+    JobCacheService.addViewedJobId(jobId);
+    // Remove from underlying list by id
+    final idx = _jobs.indexWhere((j) => j.jobId == jobId);
+    if (idx != -1) {
+      _jobs.removeAt(idx);
+    }
+    // Adjust current index if out of range for new filtered list
+    final visible = _filteredJobs();
+    if (_currentJobIndex >= visible.length) {
+      _currentJobIndex = 0;
     }
   }
 
   Future<void> _onSwipeRight() async {
     // Suppress snackbars during automation to avoid spam
-    if (_jobs.isEmpty) return;
-    final job = _jobs[_currentJobIndex];
+    final visible = _filteredJobs();
+    if (visible.isEmpty) return;
+    final job = visible[_currentJobIndex];
 
     // If automation running, skip interactive apply flow.
     if (_automationInProgress || job.source != 'PlacementIndia') {
@@ -258,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Fire and forget application record creation (auth required)
       ApplicationsService.instance.createApplication(job);
       setState(() {
-        _removeCurrentJobAndAdvance(applied: true);
+        _removeJobAndAdvance(job.jobId, applied: true);
       });
       return;
     }
@@ -286,23 +312,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (mounted) {
       setState(() {
-        _removeCurrentJobAndAdvance(applied: result.success);
+        _removeJobAndAdvance(job.jobId, applied: result.success);
       });
     }
   }
 
   void _onSwipeLeft() {
-    if (_jobs.isNotEmpty) {
+    final visible = _filteredJobs();
+    if (visible.isNotEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Skipped ${_jobs[_currentJobIndex].jobTitle}'),
+          content: Text('Skipped ${visible[_currentJobIndex].jobTitle}'),
           backgroundColor: Colors.grey,
           duration: const Duration(milliseconds: 400),
         ),
       );
     }
     setState(() {
-      _removeCurrentJobAndAdvance(applied: false);
+      if (visible.isNotEmpty) {
+        _removeJobAndAdvance(visible[_currentJobIndex].jobId, applied: false);
+      }
     });
   }
 
@@ -473,6 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onFilterSelected: (index) {
                   setState(() {
                     _selectedFilter = index;
+                    _currentJobIndex = 0; // reset view to first filtered item
                   });
                 },
               ),
@@ -487,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Jobs (${_jobs.length})',
+                      'Jobs (${_filteredJobs().length})',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -540,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       )
-                    : _jobs.isEmpty
+                    : _filteredJobs().isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -566,7 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       )
-                    : _currentJobIndex < _jobs.length
+                    : _currentJobIndex < _filteredJobs().length
                     ? GestureDetector(
                         onPanEnd: (details) async {
                           if (details.velocity.pixelsPerSecond.dx > 0) {
@@ -579,7 +609,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: DetailedJobCard(job: _jobs[_currentJobIndex]),
+                          child: DetailedJobCard(
+                            job: _filteredJobs()[_currentJobIndex],
+                          ),
                         ),
                       )
                     : Center(
