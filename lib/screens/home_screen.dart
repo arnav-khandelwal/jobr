@@ -9,6 +9,7 @@ import 'package:swipe_app/fake_data/jobs_data.dart';
 import 'package:swipe_app/services/job_api_service.dart';
 import 'package:swipe_app/services/job_cache_service.dart';
 import 'package:swipe_app/services/placementindia_apply_service.dart';
+import 'package:swipe_app/services/applications_service.dart';
 
 class PlacementIndiaCreds {
   final String email;
@@ -242,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // If automation running, skip interactive apply flow.
     if (_automationInProgress || job.source != 'PlacementIndia') {
+      // Non-PlacementIndia (or automation): record application immediately
       if (!_suppressSnackbars) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -253,6 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       }
+      // Fire and forget application record creation (auth required)
+      ApplicationsService.instance.createApplication(job);
       setState(() {
         _removeCurrentJobAndAdvance(applied: true);
       });
@@ -272,6 +276,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (result.success) {
       _showGreenSnack('Applied to ${job.jobTitle} (PlacementIndia)');
+      // Persist application record
+      ApplicationsService.instance.createApplication(job);
     } else {
       _showErrorSnack(
         result.message ?? 'Failed to apply (step: ${result.step})',

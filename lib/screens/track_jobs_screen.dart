@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:swipe_app/providers/theme_provider.dart';
 import 'package:swipe_app/widgets/compact_job_card.dart';
-import 'package:swipe_app/fake_data/jobs_data.dart';
 import 'package:swipe_app/widgets/bottom_navbar.dart';
+import 'package:swipe_app/services/applications_service.dart';
 
 class TrackJobsScreen extends StatefulWidget {
   const TrackJobsScreen({super.key});
@@ -16,57 +16,14 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   int _navIndex = 2; // Track tab index
-
-  // Sample application data with status (now mutable)
-  List<Map<String, dynamic>> _applications = [
-    {
-      'job': availableJobs[0],
-      'status': 'pending',
-      'appliedDate': '2 days ago',
-      'id': 'app_1',
-    },
-    {
-      'job': availableJobs[1],
-      'status': 'accepted',
-      'appliedDate': '1 week ago',
-      'id': 'app_2',
-    },
-    {
-      'job': availableJobs[2],
-      'status': 'rejected',
-      'appliedDate': '3 days ago',
-      'id': 'app_3',
-    },
-    {
-      'job': availableJobs[3],
-      'status': 'pending',
-      'appliedDate': '5 days ago',
-      'id': 'app_4',
-    },
-    {
-      'job': availableJobs[4],
-      'status': 'accepted',
-      'appliedDate': '2 weeks ago',
-      'id': 'app_5',
-    },
-    {
-      'job': availableJobs[5],
-      'status': 'pending',
-      'appliedDate': '1 day ago',
-      'id': 'app_6',
-    },
-    {
-      'job': availableJobs[6],
-      'status': 'rejected',
-      'appliedDate': '4 days ago',
-      'id': 'app_7',
-    },
-  ];
+  bool _loading = true;
+  List<ApplicationRecord> _applications = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadApplications();
   }
 
   @override
@@ -75,34 +32,13 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
     super.dispose();
   }
 
-  // Function to update application status
-  void _updateApplicationStatus(String applicationId, String newStatus) {
+  Future<void> _loadApplications() async {
+    setState(() => _loading = true);
+    final records = await ApplicationsService.instance.fetchApplications();
+    if (!mounted) return;
     setState(() {
-      final applicationIndex = _applications.indexWhere(
-        (app) => app['id'] == applicationId,
-      );
-      if (applicationIndex != -1) {
-        _applications[applicationIndex]['status'] = newStatus;
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(_getStatusIcon(newStatus), color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text('Status updated to ${newStatus.toUpperCase()}'),
-              ],
-            ),
-            backgroundColor: _getStatusColor(newStatus),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
+      _applications = records;
+      _loading = false;
     });
   }
 
@@ -139,15 +75,19 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                   Icons.refresh,
                   color: themeProvider.primaryTextColor,
                 ),
-                onPressed: () {
-                  setState(() {}); // Refresh the UI
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Applications refreshed'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        await _loadApplications();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Applications refreshed'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
               ),
             ],
             bottom: TabBar(
@@ -179,30 +119,32 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
 
               // Tab Content
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildApplicationsList(_applications, themeProvider),
-                    _buildApplicationsList(
-                      _applications
-                          .where((app) => app['status'] == 'pending')
-                          .toList(),
-                      themeProvider,
-                    ),
-                    _buildApplicationsList(
-                      _applications
-                          .where((app) => app['status'] == 'accepted')
-                          .toList(),
-                      themeProvider,
-                    ),
-                    _buildApplicationsList(
-                      _applications
-                          .where((app) => app['status'] == 'rejected')
-                          .toList(),
-                      themeProvider,
-                    ),
-                  ],
-                ),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildApplicationsList(_applications, themeProvider),
+                          _buildApplicationsList(
+                            _applications
+                                .where((app) => app.status == 'pending')
+                                .toList(),
+                            themeProvider,
+                          ),
+                          _buildApplicationsList(
+                            _applications
+                                .where((app) => app.status == 'accepted')
+                                .toList(),
+                            themeProvider,
+                          ),
+                          _buildApplicationsList(
+                            _applications
+                                .where((app) => app.status == 'rejected')
+                                .toList(),
+                            themeProvider,
+                          ),
+                        ],
+                      ),
               ),
             ],
           ),
@@ -305,7 +247,7 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
   }
 
   Widget _buildApplicationsList(
-    List<Map<String, dynamic>> applications,
+    List<ApplicationRecord> applications,
     ThemeProvider themeProvider,
   ) {
     if (applications.isEmpty) {
@@ -349,11 +291,9 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
             _showApplicationDetails(application, themeProvider);
           },
           child: CompactJobCard(
-            job: application['job'],
-            status: application['status'],
-            onStatusChanged: (newStatus) {
-              _updateApplicationStatus(application['id'], newStatus);
-            },
+            job: application.jobSnapshot,
+            status: application.status,
+            onStatusChanged: (_) {}, // status changes not yet supported
           ),
         );
       },
@@ -361,7 +301,7 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
   }
 
   void _showApplicationDetails(
-    Map<String, dynamic> application,
+    ApplicationRecord application,
     ThemeProvider themeProvider,
   ) {
     showModalBottomSheet(
@@ -403,14 +343,9 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CompactJobCard(
-                      job: application['job'],
-                      status: application['status'],
-                      onStatusChanged: (newStatus) {
-                        _updateApplicationStatus(application['id'], newStatus);
-                        Navigator.pop(
-                          context,
-                        ); // Close the modal after status change
-                      },
+                      job: application.jobSnapshot,
+                      status: application.status,
+                      onStatusChanged: (_) {},
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -424,25 +359,25 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
                     const SizedBox(height: 12),
                     _buildTimelineItem(
                       'Applied',
-                      application['appliedDate'],
+                      _relativeTime(application.appliedAt),
                       true,
                       themeProvider,
                     ),
-                    if (application['status'] == 'accepted')
+                    if (application.status == 'accepted')
                       _buildTimelineItem(
                         'Accepted',
-                        '1 day ago',
+                        'Recently',
                         true,
                         themeProvider,
                       ),
-                    if (application['status'] == 'rejected')
+                    if (application.status == 'rejected')
                       _buildTimelineItem(
                         'Rejected',
-                        '1 day ago',
+                        'Recently',
                         true,
                         themeProvider,
                       ),
-                    if (application['status'] == 'pending')
+                    if (application.status == 'pending')
                       _buildTimelineItem(
                         'Under Review',
                         'Pending',
@@ -564,34 +499,18 @@ class _TrackJobsScreenState extends State<TrackJobsScreen>
   }
 
   // Helper methods for status handling
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'accepted':
-        return const Color(0xFF10B981);
-      case 'rejected':
-        return const Color(0xFFEF4444);
-      case 'pending':
-      default:
-        return const Color(0xFFF59E0B);
-    }
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status.toLowerCase()) {
-      case 'accepted':
-        return Icons.check_circle;
-      case 'rejected':
-        return Icons.cancel;
-      case 'pending':
-      default:
-        return Icons.access_time;
-    }
-  }
 
   int _getPendingCount() =>
-      _applications.where((app) => app['status'] == 'pending').length;
+      _applications.where((app) => app.status == 'pending').length;
   int _getAcceptedCount() =>
-      _applications.where((app) => app['status'] == 'accepted').length;
+      _applications.where((app) => app.status == 'accepted').length;
   int _getRejectedCount() =>
-      _applications.where((app) => app['status'] == 'rejected').length;
+      _applications.where((app) => app.status == 'rejected').length;
+
+  String _relativeTime(DateTime dt) {
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
 }

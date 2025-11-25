@@ -17,6 +17,7 @@ from routes.auth import router as auth_router
 from routes.parse_resume import router as parse_router
 from routes.recommendations import router as recommend_router
 from routes.apply_placementindia import router as apply_router
+from routes.applications import router as applications_router
 import os
 from dotenv import load_dotenv
 
@@ -57,6 +58,7 @@ app.include_router(auth_router)
 app.include_router(parse_router)
 app.include_router(recommend_router)
 app.include_router(apply_router)
+app.include_router(applications_router)
 
 @app.on_event("startup")
 async def startup_event():
